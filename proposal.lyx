@@ -1,0 +1,134 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 1in
+\topmargin 1in
+\rightmargin 1in
+\bottommargin 1in
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Using Yelp to Predict Restaurant Closings
+\end_layout
+
+\begin_layout Author
+Harsh Jha and Dominic Smith
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Standard
+It is commonly reported that between 60 and 90 percent of businesses fail
+ in the three years they are open.
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+See for example http://www.businessweek.com/stories/2007-04-16/the-restaurant-fail
+ure-mythbusinessweek-business-news-stock-market-and-financial-advice
+\end_layout
+
+\end_inset
+
+ This paper investigates whether we can predict a restaurant closings using
+ reviews on Yelp in addition to local economic variables.
+\end_layout
+
+\begin_layout Standard
+Businesses close for multiple reasons including bad economic conditions
+ and poor demand from consumers.
+ Consumers can use 
+\end_layout
+
+\begin_layout Section
+Data
+\end_layout
+
+\begin_layout Standard
+The primary data for this project comes from the Yelp Dataset Challenge.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://www.yelp.com/dataset_challenge
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Methods
+\end_layout
+
+\end_body
+\end_document
