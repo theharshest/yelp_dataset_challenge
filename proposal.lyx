@@ -103,9 +103,41 @@ ure-mythbusinessweek-business-news-stock-market-and-financial-advice
 \end_layout
 
 \begin_layout Standard
-Businesses close for multiple reasons including bad economic conditions
- and poor demand from consumers.
- Consumers can use 
+Predicting business closings is an important topic for two reasons.
+ From a business owner's perspective, the earlier an owner knows the business
+ is going to fail the quicker she can move onto something else instead of
+ investing more time and money into a business that is going to fail.
+ From an economist's perspective, spending at restaurants is one of the
+ first things to decrease as the economy enters a recession, but current
+ measurement methods rely on surveys that take time to collect.
+ Data from Yelp is accessible in real time which will allow us to construct
+ a measure that could be constructed in real time.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Doing this within Yelp's API Terms of Use would be difficult at best.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Previous work with Yelp data has attempted to predict the number of reviews
+ a business will receive in the next 6 months based on previous reviews.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://www.yelp.com/html/pdf/YelpDatasetChallengeWinner_InferringFuture.pdf
+\end_layout
+
+\end_inset
+
+ Our work is to some extent a special case of this work where we try to
+ predict the probability a business receives no reviews.
 \end_layout
 
 \begin_layout Section
@@ -123,11 +155,71 @@ http://www.yelp.com/dataset_challenge
 
 \end_inset
 
+ It contains information on businesses, primarily restaurants, in Phoenix,
+ Madison, and Las Vegas for 2007 to 2012.
+\begin_inset Foot
+status open
 
+\begin_layout Plain Layout
+Check what the exact dates are.
+\end_layout
+
+\end_inset
+
+ The information provided includes all of the reviews for a business as
+ well as information about hours, type of cuisine, and importantly whether
+ the business has shut down.
 \end_layout
 
 \begin_layout Section
 Methods
+\end_layout
+
+\begin_layout Subsection
+Measuring Business Closing Date
+\end_layout
+
+\begin_layout Standard
+The Yelp data have a flag marking whether a business is Open or Closed,
+ but this is not sufficient for our purposes as we need a date of closing
+ as well.
+ Our baseline measure will be that a business closed the day after its last
+ review.
+ However, this measure can be improved upon in a number of ways.
+ Often when individuals find a business has shut down they give the business
+ a poor review and write that the business has shut down in the text instead
+ of filing the report on the Yelp.
+ We will train a classifier to identify reviews of this type so we can improve
+ our measurement of closing date for businesses marked as closed and so
+ that we can identify other closed businesses.
+ A further extension would be to develop a web crawler to check web archives
+ so we could observe when a company's website goes down.
+ 
+\end_layout
+
+\begin_layout Subsection
+Measuring the importance of reviews
+\end_layout
+
+\begin_layout Standard
+The average number of starts a company receives in its ratings is an important
+ measure 
+\end_layout
+
+\begin_layout Subsection
+Business Location
+\end_layout
+
+\begin_layout Section
+Evaluation Criteria
+\end_layout
+
+\begin_layout Section
+Appendix
+\end_layout
+
+\begin_layout Subsection
+List of Potential Features with Explanation
 \end_layout
 
 \end_body
