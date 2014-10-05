@@ -138,6 +138,23 @@ http://www.yelp.com/html/pdf/YelpDatasetChallengeWinner_InferringFuture.pdf
 
  Our work is to some extent a special case of this work where we try to
  predict the probability a business receives no reviews.
+ However, we extend this work in a number of ways.
+ First, we incorporate outside information on demographics so we can estimate
+ the demand for restaurants of a certain type.
+ Second, we take into account the number of similar restaurants nearby.
+\end_layout
+
+\begin_layout Standard
+This paper tries to account for two major reasons businesses close.
+ First, a business may close because they provide poor service and/or bad
+ food.
+ Second, a business may close because poor economic conditions have caused
+ the people who normally frequent the business to decrease the frequency
+ with which they eat out.
+ The Yelp data provides a unique opportunity to measure business quality
+ which lets us get at the first reason a business may close.
+ It also provides us enough information on businesses to be able to match
+ information about economic conditions.
 \end_layout
 
 \begin_layout Section
@@ -169,6 +186,24 @@ Check what the exact dates are.
  The information provided includes all of the reviews for a business as
  well as information about hours, type of cuisine, and importantly whether
  the business has shut down.
+ We also observe restaurant's price ranges as well as location allowing
+ us to decide whether there are similar restaurants in the area.
+\end_layout
+
+\begin_layout Standard
+Our secondary data sources include data from the U.S.
+ Census on demographics at the Census Tract level.
+ These data allow us to estimate the demand for businesses of a certain
+ type and let us control for the fact that changing economic climates effect
+ people of different income levels and education differently.
+ For example, you would expect a moderately priced restaurant in a poor
+ area to be much more likely to go out of business during a recession than
+ a moderately priced restaurant in a rich neighborhood.
+\end_layout
+
+\begin_layout Standard
+We may also include data obtained by scraping businesses' websites to determine
+ when the restaurant closed.
 \end_layout
 
 \begin_layout Section
@@ -210,16 +245,36 @@ The average number of starts a company receives in its ratings is an important
 Business Location
 \end_layout
 
+\begin_layout Standard
+We observe latitude an longitude for each business so we can create measures
+ of the number of similar businesses nearby and the type of people who live
+ (and possibly work) nearby.
+\end_layout
+
 \begin_layout Section
 Evaluation Criteria
 \end_layout
 
-\begin_layout Section
-Appendix
+\begin_layout Standard
+Evaluation can take place at both a micro and macro level.
+ Assuming our output is a probability of closing we could ask how close
+ to we come predicting individual business closings.
+ That is probably the question which is most interesting in machine learning.
+ However, an economist would also be interested to know how well we predict
+ the number of business closings in an area.
+ For example, does our predicted number of closings for Phoenix line up
+ with the number of closings in the next few months.
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Section
+\start_of_appendix
 List of Potential Features with Explanation
+\end_layout
+
+\begin_layout Standard
+Lunch or dinner - Use time of checkins and reviews to determine if the restauran
+t gets most of its business during lunch or dinner.
+ My guess is that when economic conditions worsen.
 \end_layout
 
 \end_body
