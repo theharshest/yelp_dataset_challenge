@@ -157,6 +157,93 @@ This paper tries to account for two major reasons businesses close.
  information about economic conditions.
 \end_layout
 
+\begin_layout Standard
+We are planning to pursue two prediction tasks .
+ 
+\end_layout
+
+\begin_layout Subsection
+Predicting Individual Outcomes
+\end_layout
+
+\begin_layout Standard
+Given features 
+\begin_inset Formula $\left\{ x_{1}^{t},\ldots,x_{K}^{t}\right\} $
+\end_inset
+
+ which are available at time 
+\begin_inset Formula $t$
+\end_inset
+
+ how well can we predict 
+\begin_inset Formula $Y_{t+d}$
+\end_inset
+
+ which is an indicator of whether the business was closed at time 
+\begin_inset Formula $t+d$
+\end_inset
+
+.
+ We plan to do this for 
+\begin_inset Formula $d=1,3,12$
+\end_inset
+
+ months.
+ For this task variables can be divided into four broad categories 
+\begin_inset Formula $X^{E}$
+\end_inset
+
+ which are economic variables such as the trend in unemployment rate in
+ the area, 
+\begin_inset Formula $X^{D}$
+\end_inset
+
+ which are demographic variables such as the population within some distance
+ or race of that population these variables can also be taken as measures
+ of demand for a given restaurant’s food, 
+\begin_inset Formula $X^{Q}$
+\end_inset
+
+ which measure the quality of the restaurant which are features taken from
+ Yelp reviews, and 
+\begin_inset Formula $X^{C}$
+\end_inset
+
+ which measures the level of competition a business faces from other similar
+ restaurants for example it could be restaurants of same cuisine per capita
+ in the area.
+\end_layout
+
+\begin_layout Subsection
+Predicting Area Outcomes
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $A$
+\end_inset
+
+ be some area in a city and 
+\begin_inset Formula $I^{A}$
+\end_inset
+
+ be the set of businesses that operate in that area.
+ The goal is to predict 
+\begin_inset Formula 
+\[
+\frac{\sum_{I^{A}}Y_{t+d}}{\#\left\{ I^{A}\right\} }
+\]
+
+\end_inset
+
+the percent of businesses in an area that will close in the next 
+\begin_inset Formula $d$
+\end_inset
+
+ months.
+ 
+\end_layout
+
 \begin_layout Section
 Data
 \end_layout
