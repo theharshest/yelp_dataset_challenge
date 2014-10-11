@@ -39,8 +39,8 @@
 \use_package stackrel 1
 \use_package stmaryrd 1
 \use_package undertilde 1
-\cite_engine basic
-\cite_engine_type default
+\cite_engine natbib
+\cite_engine_type authoryear
 \biblio_style plain
 \use_bibtopic false
 \use_indices false
@@ -160,6 +160,112 @@ This paper tries to account for two major reasons businesses close.
 \begin_layout Standard
 We are planning to pursue two prediction tasks .
  
+\end_layout
+
+\begin_layout Standard
+Recommendation engines often use latent factor models to predict the ratings
+ that a user will give to an item that has not yet been rated 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "Y.Koren2009Matrix"
+
+\end_inset
+
+.
+ The factors, measures of the extent to which each item possesses each factor
+ and measures of the extent to which each user prefers each factor are inferred
+ from the data.
+ Each item and user is represented as a vector of factor measures and the
+ similarity between these two vectors serves as a measure of the similarity
+ between the item and the user's preferences.
+\end_layout
+
+\begin_layout Standard
+The latent factor model has a number of known issues 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "McAuley2013Hidden"
+
+\end_inset
+
+.
+ The factors are often inferred from numeric star rating information.
+ This leads to factors that are difficult to interpret.
+ In addition, a significant number of star ratings are required before measures
+ for the factors can be inferred from new products or users.
+ This is know as the "cold start problem".
+\end_layout
+
+\begin_layout Standard
+The relevance of latent factor models to the proposed project is that it
+ may provide a way to identify factors that contribute to business success
+ or failure based on analysis of numeric star rating data provided by customers.
+\end_layout
+
+\begin_layout Standard
+The "Hidden Factors as Topics", or HFT, model 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "McAuley2013Hidden"
+
+\end_inset
+
+ may overcome these issues.
+ HFT is a statistical model that combines latent factors in numeric star
+ ratings data with latent topics in associated review text.
+ For an HFT, latent factors from numeric star ratings data and latent topics
+ from review text are identified simultaneously in a single learning stage.
+\end_layout
+
+\begin_layout Standard
+Evaluation of HFT on various datasets, including data from the Yelp Dataset
+ Challenge, found that the factors identified readily explained the variation
+ present in the ratings and reviews.
+ HFT also exhibited improved prediction accuracy especially for products
+ and users with only a few ratings since more information can be gleaned
+ from the ratings text than from a few numeric star ratings.
+\end_layout
+
+\begin_layout Standard
+The relevance of HFT to the proposed project is that it may offer an improved
+ method to identify latent factors that contribute to business failure by
+ identifying topics in the review text that are highly correlated with business
+ success or failure.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset citation
+LatexCommand citet
+key "J.Huang2014Improving"
+
+\end_inset
+
+ use Latent Dirichlet Allocation (LDA) to identify topics contained in user
+ reviews.
+ The authors used reviews of restaurants found in data from the Yelp Dataset
+ Challenge to train their topic model and found topics such as service,
+ location, healthiness, value and decor.
+\end_layout
+
+\begin_layout Standard
+Using the overall star ratings provided by users, the authors predict star
+ ratings for each hidden topic.
+ A restaurant's star rating for a particular topic is calculated as follows:
+ collect all the reviews for a restaurant that contain the specified topic
+ and assign the average rating from these reviews as the restaurant's topic
+ star rating.
+ The authors claim that restaurants could use the results of this analysis
+ to identify aspects of their business (the topics) that could be improved
+ in order to increase the star ratings given by their customers.
+\end_layout
+
+\begin_layout Standard
+The relevance of this study to the proposed project is that it provides
+ a method for assigning star ratings to discovered hidden topics.
+ This method for assigning topic star ratings could be applied regardless
+ of how the topics are discovered.
+ The predicted topic star ratings may help to predict the success or failure
+ of the business being reviewed.
 \end_layout
 
 \begin_layout Subsection
@@ -351,6 +457,17 @@ Evaluation can take place at both a micro and macro level.
  the number of business closings in an area.
  For example, does our predicted number of closings for Phoenix line up
  with the number of closings in the next few months.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "literature"
+options "plain"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
