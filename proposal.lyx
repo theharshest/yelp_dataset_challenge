@@ -9,11 +9,11 @@
 \language_package default
 \inputencoding auto
 \fontencoding global
-\font_roman default
+\font_roman times
 \font_sans default
 \font_typewriter default
 \font_math auto
-\font_default_family default
+\font_default_family rmdefault
 \use_non_tex_fonts false
 \font_sc false
 \font_osf false
@@ -24,7 +24,7 @@
 \output_sync 0
 \bibtex_command default
 \index_command default
-\paperfontsize default
+\paperfontsize 11
 \spacing single
 \use_hyperref false
 \papersize default
@@ -74,20 +74,27 @@
 \begin_body
 
 \begin_layout Title
+Reading the Writing on the Wall: 
+\begin_inset Newline newline
+\end_inset
+
 Using Yelp to Predict Restaurant Closings
 \end_layout
 
 \begin_layout Author
-Harsh Jha and Dominic Smith
+Harsh Jha, John Maloney and Dominic Smith
 \end_layout
 
-\begin_layout Section
-Introduction
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
 It is commonly reported that between 60 and 90 percent of businesses fail
- in the three years they are open.
+ within three years of opening.
 \begin_inset Foot
 status collapsed
 
@@ -98,20 +105,22 @@ ure-mythbusinessweek-business-news-stock-market-and-financial-advice
 
 \end_inset
 
+ Food quality, demand, management, and cost are just a few of a number of
+ things that have been shown to determine restaurant success.
  This paper investigates whether we can predict a restaurant closings using
  reviews on Yelp in addition to local economic variables.
-\end_layout
-
-\begin_layout Standard
-Predicting business closings is an important topic for two reasons.
+ Predicting business closings is an important topic for at least two distinct
+ reasons.
  From a business owner's perspective, the earlier an owner knows the business
  is going to fail the quicker she can move onto something else instead of
- investing more time and money into a business that is going to fail.
- From an economist's perspective, spending at restaurants is one of the
+ investing more time and money into a business that is almost surely going
+ to fail.
+ From the government's perspective, spending at restaurants is one of the
  first things to decrease as the economy enters a recession, but current
  measurement methods rely on surveys that take time to collect.
  Data from Yelp is accessible in real time which will allow us to construct
- a measure that could be constructed in real time.
+ a measure that could be constructed in real time and serve as a leading
+ economic indicator.
 \begin_inset Foot
 status open
 
@@ -122,26 +131,6 @@ Doing this within Yelp's API Terms of Use would be difficult at best.
 \end_inset
 
 
-\end_layout
-
-\begin_layout Standard
-Previous work with Yelp data has attempted to predict the number of reviews
- a business will receive in the next 6 months based on previous reviews.
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-http://www.yelp.com/html/pdf/YelpDatasetChallengeWinner_InferringFuture.pdf
-\end_layout
-
-\end_inset
-
- Our work is to some extent a special case of this work where we try to
- predict the probability a business receives no reviews.
- However, we extend this work in a number of ways.
- First, we incorporate outside information on demographics so we can estimate
- the demand for restaurants of a certain type.
- Second, we take into account the number of similar restaurants nearby.
 \end_layout
 
 \begin_layout Standard
@@ -158,13 +147,67 @@ This paper tries to account for two major reasons businesses close.
 \end_layout
 
 \begin_layout Standard
-We are planning to pursue two prediction tasks .
- 
+The primary data for this project comes from the Yelp Dataset Challenge.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+http://www.yelp.com/dataset_challenge
+\end_layout
+
+\end_inset
+
+ It contains information on businesses, primarily restaurants, in Phoenix,
+ Madison, and Las Vegas for 2007 to 2012.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Check what the exact dates are.
+\end_layout
+
+\end_inset
+
+ The information provided includes all of the reviews for a business as
+ well as information about hours, type of cuisine, and importantly whether
+ the business has shut down.
+ We also observe restaurant's price ranges as well as location allowing
+ us to decide whether there are similar restaurants in the area.
 \end_layout
 
 \begin_layout Standard
-Recommendation engines often use latent factor models to predict the ratings
- that a user will give to an item that has not yet been rated 
+Our secondary data sources include data from the U.S.
+ Census on demographics at the Census Tract level.
+ These data allow us to estimate the demand for businesses of a certain
+ type and let us control for the fact that changing economic climates effect
+ people of different income levels and education differently.
+ For example, you would expect a moderately priced restaurant in a poor
+ area to be much more likely to go out of business during a recession than
+ a moderately priced restaurant in a rich neighborhood.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset citation
+LatexCommand citet
+key "BryanHood2013Inferring"
+
+\end_inset
+
+ worked with Yelp data to predict the number of reviews a business will
+ receive in the next 6 months based on previous reviews .
+ This work focuses on the case when businesses receive no reviews over some
+ time period.
+ However, we extend this work in a number of ways.
+ First, we incorporate outside information on demographics so we can estimate
+ the demand for restaurants of a certain type.
+ Second, we take into account the number of similar restaurants nearby.
+\end_layout
+
+\begin_layout Standard
+Much of the work with Yelp has focused on extracting information from review
+ text and star ratings on Yelp.
+ For example, researchers have studied the extent to which we can predict
+ what rating a user will give a location before the user visits a location
 \begin_inset CommandInset citation
 LatexCommand citep
 key "Y.Koren2009Matrix"
@@ -172,16 +215,8 @@ key "Y.Koren2009Matrix"
 \end_inset
 
 .
- The factors, measures of the extent to which each item possesses each factor
- and measures of the extent to which each user prefers each factor are inferred
- from the data.
- Each item and user is represented as a vector of factor measures and the
- similarity between these two vectors serves as a measure of the similarity
- between the item and the user's preferences.
-\end_layout
-
-\begin_layout Standard
-The latent factor model has a number of known issues 
+ In this work researchers use latent factors to predict user's future ratings.
+ However, the latent factor model has a number of known issues 
 \begin_inset CommandInset citation
 LatexCommand citep
 key "McAuley2013Hidden"
@@ -194,12 +229,9 @@ key "McAuley2013Hidden"
  In addition, a significant number of star ratings are required before measures
  for the factors can be inferred from new products or users.
  This is know as the "cold start problem".
-\end_layout
-
-\begin_layout Standard
-The relevance of latent factor models to the proposed project is that it
- may provide a way to identify factors that contribute to business success
- or failure based on analysis of numeric star rating data provided by customers.
+ This is important to our study because many restaurants close very quickly
+ so it will be important that our classifier is able to deal with businesses
+ that have only a few reviews.
 \end_layout
 
 \begin_layout Standard
@@ -215,25 +247,13 @@ key "McAuley2013Hidden"
  ratings data with latent topics in associated review text.
  For an HFT, latent factors from numeric star ratings data and latent topics
  from review text are identified simultaneously in a single learning stage.
-\end_layout
-
-\begin_layout Standard
-Evaluation of HFT on various datasets, including data from the Yelp Dataset
+ Evaluation of HFT on various datasets, including data from the Yelp Dataset
  Challenge, found that the factors identified readily explained the variation
  present in the ratings and reviews.
  HFT also exhibited improved prediction accuracy especially for products
  and users with only a few ratings since more information can be gleaned
  from the ratings text than from a few numeric star ratings.
-\end_layout
-
-\begin_layout Standard
-The relevance of HFT to the proposed project is that it may offer an improved
- method to identify latent factors that contribute to business failure by
- identifying topics in the review text that are highly correlated with business
- success or failure.
-\end_layout
-
-\begin_layout Standard
+ 
 \begin_inset CommandInset citation
 LatexCommand citet
 key "J.Huang2014Improving"
@@ -245,35 +265,12 @@ key "J.Huang2014Improving"
  The authors used reviews of restaurants found in data from the Yelp Dataset
  Challenge to train their topic model and found topics such as service,
  location, healthiness, value and decor.
+ Using this approach with review text we may be able to 
 \end_layout
 
 \begin_layout Standard
-Using the overall star ratings provided by users, the authors predict star
- ratings for each hidden topic.
- A restaurant's star rating for a particular topic is calculated as follows:
- collect all the reviews for a restaurant that contain the specified topic
- and assign the average rating from these reviews as the restaurant's topic
- star rating.
- The authors claim that restaurants could use the results of this analysis
- to identify aspects of their business (the topics) that could be improved
- in order to increase the star ratings given by their customers.
-\end_layout
-
-\begin_layout Standard
-The relevance of this study to the proposed project is that it provides
- a method for assigning star ratings to discovered hidden topics.
- This method for assigning topic star ratings could be applied regardless
- of how the topics are discovered.
- The predicted topic star ratings may help to predict the success or failure
- of the business being reviewed.
-\end_layout
-
-\begin_layout Subsection
-Predicting Individual Outcomes
-\end_layout
-
-\begin_layout Standard
-Given features 
+Our first task will be to predict individual business outcomes.
+ The question will be given features 
 \begin_inset Formula $\left\{ x_{1}^{t},\ldots,x_{K}^{t}\right\} $
 \end_inset
 
@@ -318,14 +315,13 @@ Given features
  which measures the level of competition a business faces from other similar
  restaurants for example it could be restaurants of same cuisine per capita
  in the area.
-\end_layout
-
-\begin_layout Subsection
-Predicting Area Outcomes
+ This evaluation criteria is of most interest to the business owner.
 \end_layout
 
 \begin_layout Standard
-Let 
+Another evaluation criteria will be how well our classifier performs over
+ some larger area.
+ Let 
 \begin_inset Formula $A$
 \end_inset
 
@@ -347,116 +343,15 @@ the percent of businesses in an area that will close in the next
 \end_inset
 
  months.
- 
-\end_layout
-
-\begin_layout Section
-Data
+ This evaluation criteria is of interest to goverments because it provides
+ information about local economic conditions.
 \end_layout
 
 \begin_layout Standard
-The primary data for this project comes from the Yelp Dataset Challenge.
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-http://www.yelp.com/dataset_challenge
-\end_layout
-
+\begin_inset Newpage newpage
 \end_inset
 
- It contains information on businesses, primarily restaurants, in Phoenix,
- Madison, and Las Vegas for 2007 to 2012.
-\begin_inset Foot
-status open
 
-\begin_layout Plain Layout
-Check what the exact dates are.
-\end_layout
-
-\end_inset
-
- The information provided includes all of the reviews for a business as
- well as information about hours, type of cuisine, and importantly whether
- the business has shut down.
- We also observe restaurant's price ranges as well as location allowing
- us to decide whether there are similar restaurants in the area.
-\end_layout
-
-\begin_layout Standard
-Our secondary data sources include data from the U.S.
- Census on demographics at the Census Tract level.
- These data allow us to estimate the demand for businesses of a certain
- type and let us control for the fact that changing economic climates effect
- people of different income levels and education differently.
- For example, you would expect a moderately priced restaurant in a poor
- area to be much more likely to go out of business during a recession than
- a moderately priced restaurant in a rich neighborhood.
-\end_layout
-
-\begin_layout Standard
-We may also include data obtained by scraping businesses' websites to determine
- when the restaurant closed.
-\end_layout
-
-\begin_layout Section
-Methods
-\end_layout
-
-\begin_layout Subsection
-Measuring Business Closing Date
-\end_layout
-
-\begin_layout Standard
-The Yelp data have a flag marking whether a business is Open or Closed,
- but this is not sufficient for our purposes as we need a date of closing
- as well.
- Our baseline measure will be that a business closed the day after its last
- review.
- However, this measure can be improved upon in a number of ways.
- Often when individuals find a business has shut down they give the business
- a poor review and write that the business has shut down in the text instead
- of filing the report on the Yelp.
- We will train a classifier to identify reviews of this type so we can improve
- our measurement of closing date for businesses marked as closed and so
- that we can identify other closed businesses.
- A further extension would be to develop a web crawler to check web archives
- so we could observe when a company's website goes down.
- 
-\end_layout
-
-\begin_layout Subsection
-Measuring the importance of reviews
-\end_layout
-
-\begin_layout Standard
-The average number of starts a company receives in its ratings is an important
- measure 
-\end_layout
-
-\begin_layout Subsection
-Business Location
-\end_layout
-
-\begin_layout Standard
-We observe latitude an longitude for each business so we can create measures
- of the number of similar businesses nearby and the type of people who live
- (and possibly work) nearby.
-\end_layout
-
-\begin_layout Section
-Evaluation Criteria
-\end_layout
-
-\begin_layout Standard
-Evaluation can take place at both a micro and macro level.
- Assuming our output is a probability of closing we could ask how close
- to we come predicting individual business closings.
- That is probably the question which is most interesting in machine learning.
- However, an economist would also be interested to know how well we predict
- the number of business closings in an area.
- For example, does our predicted number of closings for Phoenix line up
- with the number of closings in the next few months.
 \end_layout
 
 \begin_layout Standard
@@ -468,17 +363,6 @@ options "plain"
 \end_inset
 
 
-\end_layout
-
-\begin_layout Section
-\start_of_appendix
-List of Potential Features with Explanation
-\end_layout
-
-\begin_layout Standard
-Lunch or dinner - Use time of checkins and reviews to determine if the restauran
-t gets most of its business during lunch or dinner.
- My guess is that when economic conditions worsen.
 \end_layout
 
 \end_body
