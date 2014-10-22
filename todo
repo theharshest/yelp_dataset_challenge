@@ -2,6 +2,7 @@ Preprocessing:
   Business:
     tokenization
     lowercase
+    removing repeated characters (looovveee -> love)
     expansion of contracted terms (you're -> you are)
     spelling correction
   Checkin
@@ -9,6 +10,7 @@ Preprocessing:
   Tip:
     tokenization
     lowercase
+    removing repeated characters (looovveee -> love)
     expansion of contracted terms (you're -> you are)
     spelling correction
   User
