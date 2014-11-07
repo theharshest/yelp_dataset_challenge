@@ -1,0 +1,26 @@
+The data directory contains four data files:
+
+  data_feats.csv - contains the names of the data features
+  restaurant_data.csv - contains numeric feature data for the restaurants
+  meta_feats.csv - contains the names of the meta data features
+  restaurant_meta.csv - contains the meta data for the restaurants
+
+Each row in the restaurant_meta.csv file provides the meta data for the corresponding data row in the
+restaurant_data.csv file.  These two files contain column headers.
+
+Each row in the data_feats.csv file provides the name of the feature for the corresponding column in
+the restaurant_data.csv file.  Each row in the meta_feats.csv file provides the name of the feature
+for the corresponding column in the restaurant_meta.csv file.
+
+Summary statistics for the data set (as of Nov 3, 2014):
+
+  14303 restaurants
+    411 data features
+      8 meta data features
+
+To recreate the restaurant_data.csv and restaurant_meta.csv files, do the following:
+
+  (assume that DATA references the data directory and CODE the code directory from the git repository)
+
+  $ python $CODE/createdatafiles.py $DATA/yelp_academic_dataset_business.json \
+           $DATA/data_feats.csv $DATA/restaurant_data.csv $DATA/restaurant_meta.csv
