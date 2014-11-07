@@ -5,6 +5,8 @@ The data directory contains four data files:
   meta_feats.csv - contains the names of the meta data features
   restaurant_meta.csv - contains the meta data for the restaurants
 
+The data was filtered to include only restaurants located in Arizona, Nevada or Wisconsin.
+
 Each row in the restaurant_meta.csv file provides the meta data for the corresponding data row in the
 restaurant_data.csv file.  These two files contain column headers.
 
@@ -12,11 +14,11 @@ Each row in the data_feats.csv file provides the name of the feature for the cor
 the restaurant_data.csv file.  Each row in the meta_feats.csv file provides the name of the feature
 for the corresponding column in the restaurant_meta.csv file.
 
-Summary statistics for the data set (as of Nov 3, 2014):
+Summary statistics for the data set (as of Nov 6, 2014):
 
-  14303 restaurants
-    411 data features
-      8 meta data features
+  13010 restaurants
+    410 data features
+      9 meta data features
 
 To recreate the restaurant_data.csv and restaurant_meta.csv files, do the following:
 

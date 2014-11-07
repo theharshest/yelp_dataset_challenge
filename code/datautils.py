@@ -83,8 +83,8 @@ Outputs:
     column for each feature
 '''
 def load_restaurant_feature_matrix(file_path,columns=feat_info.data_feat_names):
-    return load_feature_matrix(file_path, columns=columns,\
-                               filter_key=feat_info.restaurants_key,filter_val=True)
+    return load_feature_matrix(file_path, columns=columns,
+                               filt=feat_info.restaurant_filter)
 
 '''
 Load a feature matrix from the specified JSON file path.
@@ -111,10 +111,10 @@ Outputs:
     a 2D numpy float array containing one line for each object and one
     column for each feature
 '''
-def load_feature_matrix(file_path,columns=feat_info.data_feat_names,filter_key=None,filter_val=None):
+def load_feature_matrix(file_path,columns=feat_info.data_feat_names,filt=None):
     with open(file_path, 'r') as fin:
         # load the feature matrix from the JSON file
-        return read_feature_matrix(fin,columns,filter_key,filter_val)
+        return read_feature_matrix(fin,columns,filt)
 
 # ==================================================
 # Functions to load JSON objects from JSON files
@@ -136,7 +136,7 @@ Outputs:
     list of keys that can be used to access JSON object attributes
 '''
 def load_restaurants(file_path):
-    return load_objects(file_path, filter_key=feat_info.restaurants_key,filter_val=True)
+    return load_objects(file_path, filt=feat_info.restaurant_filter)
 
 '''
 Load objects from the specified JSON file path and flatten the attributes into
@@ -147,12 +147,13 @@ Inputs:
   file_path:
     the path the file containing JSON objects
 
-  filter_key: (optional)
-    a key in the JSON file that will be used for filtering
-
-  filter_val: (optional)
-    the value to use for filtering, only objects where
-    ``obj[filter_key] == filter_val`` will be returned
+  filt: (optional)
+    dictionary containing the criteria that will be used to filter the
+    objects that are loaded, each dictonary key is the name of a JSON
+    attributes and each value is a list of possible values for that attribute,
+    for each key-value pair the following condition is evaluated: obj[key] in value,
+    each key-value pair defines criteria that are ORed together while the
+    key-value pair conditons are ANDed together
 
 Outputs:
 
@@ -162,9 +163,9 @@ Outputs:
   columns:
     list of keys that can be used to access JSON object attributes
 '''
-def load_objects(file_path, filter_key=None, filter_val=None):
+def load_objects(file_path, filt=None):
     with open(file_path, 'r') as fin:
-        return read_objects(fin, filter_key, filter_val)
+        return read_objects(fin, filt)
 
 # ====================================================
 # Functions to read feature matrices from file objects
@@ -181,12 +182,13 @@ Inputs:
     the columns to include in the feature matrix, by default all columns
     in the ``data_feat_names`` are included
 
-  filter_key: (optional)
-    a key in the JSON file that will be used for filtering
-
-  filter_val: (optional)
-    the value to use for filtering, only objects where
-    ``obj[filter_key] == filter_val`` will be returned
+  filt: (optional)
+    dictionary containing the criteria that will be used to filter the
+    objects that are loaded, each dictonary key is the name of a JSON
+    attributes and each value is a list of possible values for that attribute,
+    for each key-value pair the following condition is evaluated: obj[key] in value,
+    each key-value pair defines criteria that are ORed together while the
+    key-value pair conditons are ANDed together
 
 Outputs:
 
@@ -194,9 +196,9 @@ Outputs:
     a 2D numpy float array containing one line for each object and one
     column for each feature
 '''
-def read_feature_matrix(fin,columns=feat_info.data_feat_names,filter_key=None,filter_val=None):
+def read_feature_matrix(fin,columns=feat_info.data_feat_names,filt=None):
     # load the objects from the JSON file
-    objects,junk = read_objects(fin, filter_key, filter_val)
+    objects,junk = read_objects(fin, filt)
 
     # return features
     return get_feature_matrix(objects,columns)    
@@ -288,12 +290,13 @@ Inputs:
   fin:
     a file object from which JSON objects can be loaded
 
-  filter_key: (optional)
-    a key in the JSON file that will be used for filtering
-
-  filter_val: (optional)
-    the value to use for filtering, only objects where
-    ``obj[filter_key] == filter_val`` will be returned
+  filt: (optional)
+    dictionary containing the criteria that will be used to filter the
+    objects that are loaded, each dictonary key is the name of a JSON
+    attributes and each value is a list of possible values for that attribute,
+    for each key-value pair the following condition is evaluated: obj[key] in value,
+    each key-value pair defines criteria that are ORed together while the
+    key-value pair conditons are ANDed together
 
 Outputs:
 
@@ -303,7 +306,7 @@ Outputs:
   columns:
     list of keys that can be used to access JSON object attributes
 '''
-def read_objects(fin, filter_key=None, filter_val=None):
+def read_objects(fin, filt=None):
     # the list of objects to be populated
     objects = []
     # the list of columns to be populated
@@ -317,8 +320,21 @@ def read_objects(fin, filter_key=None, filter_val=None):
         # flatten the values from the line_contents dictionary
         obj = flatten_dict(line_contents, obj)
         
+        # set flag used to control whether this object is added
+        passed_filter = True
+
         # apply the filter if appropriate
-        if ( (filter_key is None) or ( (filter_key in obj) and (obj[filter_key] == filter_val) ) ):
+        if (filt is not None):
+            # check the filter conditions
+            for k,v in filt.iteritems():
+                if ((k not in obj) or (obj[k] not in v)):
+                    # this object doesn't pass the filter
+                    passed_filter=False
+                    # return to the parent loop
+                    break
+
+        # add the object to the list if it passed the filter
+        if (passed_filter):
             # add the new object to the list
             objects.append(obj)
             # update the list of columns names

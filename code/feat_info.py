@@ -23,8 +23,9 @@ meta_feat_info = dict([
 meta_feat_names = ['business_id','name','full_address','city','state',\
                    'latitude','longitude','review_count','open']
 
-# key use to determine if a JSON object is a restaurant
-restaurants_key = 'categories.Restaurants'
+# filter used to filter business data
+restaurant_filter = {'categories.Restaurants':[True],
+                     'state':['AZ','NV','WI']}
 
 # values for ordinal attributes
 attire_values = [None, 'casual', 'dressy', 'formal']
