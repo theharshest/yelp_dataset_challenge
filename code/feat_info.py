@@ -17,10 +17,11 @@ meta_feat_info = dict([
     ('state',str),
     ('latitude',float),
     ('longitude',float),
-    ('review_count',int)
+    ('review_count',int),
+    ('open',int)
 ])
 meta_feat_names = ['business_id','name','full_address','city','state',\
-                   'latitude','longitude','review_count']
+                   'latitude','longitude','review_count','open']
 
 # key use to determine if a JSON object is a restaurant
 restaurants_key = 'categories.Restaurants'
