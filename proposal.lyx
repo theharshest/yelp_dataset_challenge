@@ -107,8 +107,8 @@ ure-mythbusinessweek-business-news-stock-market-and-financial-advice
 
  Food quality, demand, management, and cost are just a few of a number of
  things that have been shown to determine restaurant success.
- This paper investigates whether we can predict a restaurant closings using
- reviews on Yelp in addition to local economic variables.
+ This paper investigates whether we can predict restaurant closings using
+ reviews on Yelp in addition to local economic amd demographic variables.
  Predicting business closings is an important topic for at least two distinct
  reasons.
  From a business owner's perspective, the earlier an owner knows the business
@@ -122,7 +122,7 @@ ure-mythbusinessweek-business-news-stock-market-and-financial-advice
  a measure that could be constructed in real time and serve as a leading
  economic indicator.
 \begin_inset Foot
-status open
+status collapsed
 
 \begin_layout Plain Layout
 Doing this within Yelp's API Terms of Use would be difficult at best.
@@ -138,12 +138,11 @@ This paper tries to account for two major reasons businesses close.
  First, a business may close because they provide poor service and/or bad
  food.
  Second, a business may close because poor economic conditions have caused
- the people who normally frequent the business to decrease the frequency
+ the people who would normally frequent the business to decrease the frequency
  with which they eat out.
  The Yelp data provides a unique opportunity to measure business quality
  which lets us get at the first reason a business may close.
- It also provides us enough information on businesses to be able to match
- information about economic conditions.
+ It also provides information on the competition each business faces.
 \end_layout
 
 \begin_layout Standard
@@ -158,16 +157,7 @@ http://www.yelp.com/dataset_challenge
 \end_inset
 
  It contains information on businesses, primarily restaurants, in Phoenix,
- Madison, and Las Vegas for 2007 to 2012.
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-Check what the exact dates are.
-\end_layout
-
-\end_inset
-
+ Madison, and Las Vegas.
  The information provided includes all of the reviews for a business as
  well as information about hours, type of cuisine, and importantly whether
  the business has shut down.
@@ -184,88 +174,6 @@ Our secondary data sources include data from the U.S.
  For example, you would expect a moderately priced restaurant in a poor
  area to be much more likely to go out of business during a recession than
  a moderately priced restaurant in a rich neighborhood.
-\end_layout
-
-\begin_layout Standard
-\begin_inset CommandInset citation
-LatexCommand citet
-key "BryanHood2013Inferring"
-
-\end_inset
-
- worked with Yelp data to predict the number of reviews a business will
- receive in the next 6 months based on previous reviews .
- This work focuses on the case when businesses receive no reviews over some
- time period.
- However, we extend this work in a number of ways.
- First, we incorporate outside information on demographics so we can estimate
- the demand for restaurants of a certain type.
- Second, we take into account the number of similar restaurants nearby.
-\end_layout
-
-\begin_layout Standard
-Much of the work with Yelp has focused on extracting information from review
- text and star ratings on Yelp.
- For example, researchers have studied the extent to which we can predict
- what rating a user will give a location before the user visits a location
-\begin_inset CommandInset citation
-LatexCommand citep
-key "Y.Koren2009Matrix"
-
-\end_inset
-
-.
- In this work researchers use latent factors to predict user's future ratings.
- However, the latent factor model has a number of known issues 
-\begin_inset CommandInset citation
-LatexCommand citep
-key "McAuley2013Hidden"
-
-\end_inset
-
-.
- The factors are often inferred from numeric star rating information.
- This leads to factors that are difficult to interpret.
- In addition, a significant number of star ratings are required before measures
- for the factors can be inferred from new products or users.
- This is know as the "cold start problem".
- This is important to our study because many restaurants close very quickly
- so it will be important that our classifier is able to deal with businesses
- that have only a few reviews.
-\end_layout
-
-\begin_layout Standard
-The "Hidden Factors as Topics", or HFT, model 
-\begin_inset CommandInset citation
-LatexCommand citep
-key "McAuley2013Hidden"
-
-\end_inset
-
- may overcome these issues.
- HFT is a statistical model that combines latent factors in numeric star
- ratings data with latent topics in associated review text.
- For an HFT, latent factors from numeric star ratings data and latent topics
- from review text are identified simultaneously in a single learning stage.
- Evaluation of HFT on various datasets, including data from the Yelp Dataset
- Challenge, found that the factors identified readily explained the variation
- present in the ratings and reviews.
- HFT also exhibited improved prediction accuracy especially for products
- and users with only a few ratings since more information can be gleaned
- from the ratings text than from a few numeric star ratings.
- 
-\begin_inset CommandInset citation
-LatexCommand citet
-key "J.Huang2014Improving"
-
-\end_inset
-
- use Latent Dirichlet Allocation (LDA) to identify topics contained in user
- reviews.
- The authors used reviews of restaurants found in data from the Yelp Dataset
- Challenge to train their topic model and found topics such as service,
- location, healthiness, value and decor.
- Using this approach with review text we may be able to 
 \end_layout
 
 \begin_layout Standard
@@ -345,6 +253,100 @@ the percent of businesses in an area that will close in the next
  months.
  This evaluation criteria is of interest to goverments because it provides
  information about local economic conditions.
+\end_layout
+
+\begin_layout Standard
+At this point we have completed the data collection phase and are moving
+ on to the preprocessing of data.
+ In particular, the restaurants must be mapped to Census tracts so we can
+ include demographic information and the review text must be standardized
+ before we can apply a bag of words model to it.
+\end_layout
+
+\begin_layout Standard
+The Yelp Data have been used by a number of researchers to answer questions
+ about business and review dynamics.
+ Prior work has used Yelp data to predict the number of reviews a business
+ will receive in the next 6 months based on previous reviews.
+ 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "BryanHood2013Inferring"
+
+\end_inset
+
+ This work focuses on the case when businesses receive no reviews over some
+ time period.
+ However, we extend this work in a number of ways.
+ First, we incorporate outside information on demographics so we can estimate
+ the demand for restaurants of a certain type.
+ Second, we take into account the number of similar restaurants nearby.
+\end_layout
+
+\begin_layout Standard
+Much of the work with Yelp has focused on extracting information from review
+ text and star ratings on Yelp.
+ For example, researchers have studied the extent to which we can predict
+ what rating a user will give a location before the user visits a location
+\begin_inset CommandInset citation
+LatexCommand citep
+key "Y.Koren2009Matrix"
+
+\end_inset
+
+.
+ This work involves using latent factors models which have a number of known
+ issues 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "McAuley2013Hidden"
+
+\end_inset
+
+.
+ In particular, a significant number of star ratings are required before
+ measures for the factors can be inferred from new products or users.
+ This is know as the "cold start problem".
+ This is important to our study because many restaurants close very quickly
+ so it will be important that our classifier is able to deal with businesses
+ that have only a few reviews.
+\end_layout
+
+\begin_layout Standard
+To combat this problem we are exploring the "Hidden Factors as Topics",
+ or HFT, model 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "McAuley2013Hidden"
+
+\end_inset
+
+.
+ HFT is a statistical model that combines latent factors in numeric star
+ ratings data with latent topics in associated review text.
+ For an HFT, latent factors from numeric star ratings data and latent topics
+ from review text are identified simultaneously in a single learning stage.
+ Evaluation of HFT on various datasets, including data from the Yelp Dataset
+ Challenge, found that the factors identified readily explained the variation
+ present in the ratings and reviews.
+ HFT also exhibited improved prediction accuracy especially for products
+ and users with only a few ratings since more information can be gleaned
+ from the ratings text than from a few numeric star ratings.
+ Huang et al.
+ (2014) use Latent Dirichlet Allocation (LDA) to identify topics contained
+ in user reviews.
+ 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "J.Huang2014Improving"
+
+\end_inset
+
+ The authors used reviews of restaurants found in data from the Yelp Dataset
+ Challenge to train their topic model and found topics such as service,
+ location, healthiness, value and decor.
+ We are using these papers to guide us as we perform the preprocessing and
+ feature selection stages of our model creation.
 \end_layout
 
 \begin_layout Standard

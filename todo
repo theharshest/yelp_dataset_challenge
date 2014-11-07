@@ -46,3 +46,5 @@ Things to consider:
 1) w1: All reviews should not be equally weighted. User "importance" should be considered as weight to the review he has provided. This would help distinguish fake users from helpful users. Can be done using multiclass classifier, probably something on a scale of 1 to 3. 1 being fake/unhelpful users, 2 being average users and 3 being very helpful users. Use user.json data for this classification of users.
 2) w2: This is another weight factor for a review which should be calcluated from the "votes" section of the review, i.e. based on how many votes on "funny", "useful" and "cool" a review is getting.
 3) 
+
+http://www.fcc.gov/developers/census-block-conversions-api

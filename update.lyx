@@ -1,0 +1,283 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman times
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family rmdefault
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize 11
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine natbib
+\cite_engine_type authoryear
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 1in
+\topmargin 1in
+\rightmargin 1in
+\bottommargin 1in
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Using Yelp to Predict Restaurant Closings
+\end_layout
+
+\begin_layout Author
+Harsh Jha, John Maloney and Dominic Smith
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Standard
+The task of our project remains the same as in the proposal.
+ Given some date 
+\begin_inset Formula $t$
+\end_inset
+
+ and area 
+\begin_inset Formula $A$
+\end_inset
+
+ we are building a model to predict the number of restaurants in 
+\begin_inset Formula $A$
+\end_inset
+
+ that will close within the 
+\begin_inset Formula $x$
+\end_inset
+
+ months following 
+\begin_inset Formula $t$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+Data
+\end_layout
+
+\begin_layout Standard
+Our data comes from three sources.
+ The first source is the Yelp dataset challenge.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Downloaded from http://www.yelp.com/dataset_challenge
+\end_layout
+
+\end_inset
+
+ We have restricted this sample to 12k restaurants operating in either Phoenix,
+ Las Vegas, or Madison.
+ These data contain business metadata as well as user reviews.
+ Our second source is the U.S.
+ Decennial Census.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Downloaded from American Fact Finder at the Census Tract level.
+\end_layout
+
+\end_inset
+
+ These data contain data on the income level, ethnic composition, and population
+ of an area.
+ The final data are from the Local Area Unemployment Statistics published
+ by the BLS.
+ They contain monthly unemployment rates at the city level.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Downloaded from http://www.bls.gov/lau/#data
+\end_layout
+
+\end_inset
+
+ The data from Yelp allow us to measure food quality through review stars
+ and text and business attention through the number of reviews.
+ Data from the Census allow us to control for whether a restaurant is in
+ an area where it should do well.
+ For exampl, high priced restaurants should do better in high income areas.
+ Data from the Bureau of Labor Statistics (BLS) allow us to control for
+ aggregate economic conditions which make all restaurants more or less likely
+ to close.
+\end_layout
+
+\begin_layout Standard
+At this point we have downloaded all data we need from Yelp and the Census
+ and are finishing the preprocessing.
+ For the Yelp data we have matched each business to the appropriate Census
+ tract and have converted variables such as food type and whether credit
+ cards are accepted to numeric variables.
+ We have also estimated a closing date for businesses marked as closed in
+ the data by extracting the date of the business' final review.
+ We currently have code running to preprocessing the reviews text so that
+ we can perform sentiment analysis.
+ We are working on developing measures of how much competition a restaurant
+ faces.
+ These measures will involve the number of 
+\begin_inset Quotes eld
+\end_inset
+
+similar
+\begin_inset Quotes erd
+\end_inset
+
+ restaurants within a given area.
+ We are also working on taking user specific fixed effects out of star ratings
+ to standardize what a given number of stars for a restaurant means.
+ Finally, we are also extracting features such as date of first review and
+ reviews per month to use in our model.
+ The Census data have been downloaded and will be merged to the Yelp data
+ within the next few days.
+ The BLS data have not been downloaded yet, because the historic data are
+ revised regularly and we'll want to use the data as it was available on
+ whichever date we choose for our prediction task.
+\end_layout
+
+\begin_layout Section
+Methods
+\end_layout
+
+\begin_layout Standard
+The Yelp data cover 2008-2013 (Is this true? Can someone check the min and
+ max review date?).
+ Our initial plan is to select a date near the middle of the sample to serve
+ as the prediction date.
+ We will then use only information available at that date (reviews, unemployment
+ statistics, etc) to fit our model.
+ Our class labels will be based on how long a restaurant stays open after
+ the date we chose.
+ We are going to try running the classifier as both a two class problem
+ where the positive class is closed by X months and as a k class problem
+ with classes such as 
+\begin_inset Quotes eld
+\end_inset
+
+closed 0-3 months after date
+\begin_inset Quotes erd
+\end_inset
+
+, closed 
+\begin_inset Quotes eld
+\end_inset
+
+4-9 months after
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+still open after 9 months
+\begin_inset Quotes erd
+\end_inset
+
+.
+ One area we are working on is the proper way to calculate error rates in
+ our model.
+ One option is to perform n-fold cross validation splitting the restaurants
+ open at the date we select.
+ We are concerned we will have a small number of restaurants closing in
+ each test set if we use this approach.
+ Another option would be to randomly pick 
+\begin_inset Formula $n$
+\end_inset
+
+ dates then use cross validation on the 
+\begin_inset Formula $n$
+\end_inset
+
+ dates.
+ This approach lets us take more use of the amount of data we have, but
+ there could be issues arrising from the dates we select overlapping.
+ For example, you would not want to train using January 1, 2010 then use
+ February 1, 2010 as you test date.
+\end_layout
+
+\begin_layout Section
+Issues
+\end_layout
+
+\begin_layout Standard
+Our main issue so far has been the amount of time preproccessing the review
+ data has taken to run.
+ We expect that our sentiment analysis program will run for a long time
+ as which is the only issue we anticipate completing this project.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "literature"
+options "plain"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
