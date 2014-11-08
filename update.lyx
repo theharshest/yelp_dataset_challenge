@@ -281,7 +281,8 @@ Our main issue so far has been the amount of time preprocessing the review
 \end_layout
 
 \begin_layout Standard
-The vast majority of the descriptive attributes available in the Yelp data
+Another potential issue is the calculation of similarity between restaurants.
+ The vast majority of the descriptive attributes available in the Yelp data
  set are categories to which a restaurant can be assigned.
  These categories have been mapped to binary attributes indicating whether
  or not the restaurant belongs to the category.
