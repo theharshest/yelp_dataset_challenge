@@ -177,30 +177,16 @@ At this point we have downloaded all data we need from Yelp and the Census
  We are working on estimating a closing date for each closed restaurant
  based on the date of the restaurant's final review.
  We currently have code running to preprocess the review text
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-Applying techniques from 
-\begin_inset Quotes eld
-\end_inset
-
-Python Text Processing with NLTK 2.0 Cookbook
-\begin_inset Quotes erd
-\end_inset
-
- by Jacob Perkins
-\end_layout
+\begin_inset CommandInset citation
+LatexCommand citet
+key "Perkins2010NLTK2CB"
 
 \end_inset
 
  so that we can perform sentiment analysis using a linear SVM classifier
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-http://nlp.stanford.edu/pubs/sidaw12_simple_sentiment.pdf
-\end_layout
+\begin_inset CommandInset citation
+LatexCommand citet
+key "2012WangSentiment"
 
 \end_inset
 
