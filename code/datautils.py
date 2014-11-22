@@ -24,6 +24,7 @@ import numpy as np
 import json
 import csv
 import feat_info
+import time
 
 '''
 Load data for restaurants, convert the data features into numeric data and then
@@ -60,7 +61,33 @@ def convert_restaurant_json_to_csv(json_file_path, feat_file_path, meta_file_pat
     
     # write meta data to file
     write_objects_csv(meta_file_path, objects, meta_columns)
+
+def get_last_review_dates(json_review_path, meta_file_path):
+    # load the reviews
+    # - the reviews don't indicate the usiness type - so have to load them all
+    (reviews, revcols) = load_objects(json_review_path)
+
+    # load the meta data for the restaurants from the csv file
+    rests = read_feature_matrix_csv(meta_file_path)
     
+    # create a dictionary to hold the last review dates
+    last_review_dates = {}
+    for rest in rests:
+        # add the business IDs for restaurants to the dictionary
+        last_review_dates[rest[0]] = None
+
+    # iterate through reviews and collect last review date
+    for review in reviews:
+        bus_id = review['business_id']
+        if (bus_id in last_review_dates):
+            review_date = str2date(review['date'])
+            current_last = last_review_dates[bus_id]
+            if (current_last is None or current_last < review_date):
+                print 'Set last revew date'
+                last_review_dates[bus_id] = review_date
+
+    return last_review_dates
+
 # ==================================================
 # Functions to load feature matrices from JSON files
 # ==================================================
@@ -464,3 +491,9 @@ def get_row(obj, columns=feat_info.data_feat_names):
         else:
             row.append('')
     return row
+
+# ==================================================
+# Functions to convert data
+# ==================================================
+def str2date(datestr):
+    return time.strptime(datestr, '%Y-%m-%d')
