@@ -38,13 +38,16 @@ Inputs:
   json_review_path
     the path to the file containing JSON review objects
   
+  csv_tract_path
+    the path to the CSV file containing cencus tracts for businesses
+
   feat_file_path:
     the path to the file where the csv feature data will be written
 
   meta_file_path:
     the path to the file where the csv meta data will be written
 '''
-def convert_restaurant_json_to_csv(json_bus_path, json_review_path, feat_file_path, meta_file_path):
+def convert_restaurant_json_to_csv(json_bus_path, json_review_path, csv_tract_path, feat_file_path, meta_file_path):
     # initialize the column names
     feat_columns = feat_info.data_feat_names
     meta_columns = feat_info.meta_feat_names
@@ -56,8 +59,8 @@ def convert_restaurant_json_to_csv(json_bus_path, json_review_path, feat_file_pa
     # load the restaurant objects
     objects,junk = load_restaurants(json_bus_path)
 
-    # add last review date to objects
-    objects = add_last_review_dates(json_review_path, objects)
+    # add last review date and census tract to objects
+    objects = add_review_census_data(json_review_path, csv_tract_path, objects)
     
     # create feature matrix
     feat_mat = get_feature_matrix(objects, feat_columns)
@@ -69,13 +72,16 @@ def convert_restaurant_json_to_csv(json_bus_path, json_review_path, feat_file_pa
     write_objects_csv(meta_file_path, objects, meta_columns)
 
 '''
-Add the last review dates for each business in the specified list of
-business objects.
+Add the last review dates and census tract for each business in the specified
+list of business objects.
 
 Inputs:
 
   json_review_path
     the path to the file containing JSON review objects
+
+  csv_tract_path
+    the path to the CSV file containing cencus tracts for businesses
 
   buses
     a list of dictionaties with each dictionary representing a business
@@ -84,18 +90,32 @@ Outputs:
 
   buses
     the list of business objects with each business object augmented with its
-    last review date
+    last review date and census tract
 '''
-def add_last_review_dates(json_review_path, buses):
+def add_review_census_data(json_review_path, csv_tract_path, buses):
     # load the reviews
     # - the reviews don't indicate the usiness type - so have to load them all
     (reviews, revcols) = load_objects(json_review_path)
     
-    # create a dictionary to hold the last review dates
+    # load the census tracts
+    census_data = read_feature_matrix_csv(csv_tract_path,False)
+
+    # initialize  dictionaries to hold the last review dates and census tract
     last_review_dates = {}
+    census_tracts = {}
     for bus in buses:
-        # add the business IDs for restaurants to the dictionary
-        last_review_dates[bus['business_id']] = None
+        bid = bus['business_id']
+        # add the business IDs for restaurants to the dictionaries
+        last_review_dates[bid] = None
+        census_tracts[bid] = None
+
+    # populate census tract data
+    for i in xrange(census_data.shape[0]):
+        bid = census_data[i,0]
+        tract = census_data[i,1]
+        # add census tract
+        if (tract): # is tract is not the empty string
+            census_tracts[bid] = tract
 
     # add the last review dates to the dictionary
     with open(json_review_path, 'r') as fin:
@@ -115,12 +135,15 @@ def add_last_review_dates(json_review_path, buses):
                 if (current_last is None or current_last < review_date):
                     last_review_dates[bid] = review_date
 
-    # copy the last review dates into the business objects
+    # copy the last review dates and census tracts into the business objects
     for bus in buses:
         bid = bus['business_id']
         review_date = last_review_dates[bid]
+        tract = census_tracts[bid]
         if (review_date is not None):
             bus['last_review_date'] = date2int(review_date)
+        if (tract is not None):
+            bus['census_tract'] = tract
 
     # return the augmented business objects
     return buses
@@ -469,22 +492,28 @@ Inputs:
   file_path:
     the path to the file holding the data to be loaded
 
+  has_hdr: (optional)
+    indicates whether or not the file contains headers, by default this is True
+
 Outputs:
 
   features:
     a 2D numpy array containing one line for each object and one
     column for each feature
 '''
-def read_feature_matrix_csv(file_path):
+def read_feature_matrix_csv(file_path, has_hdr=True):
     with open(file_path, 'rbU') as fin:
         csv_file = csv.reader(fin)
-        # skip column headers
-        csv_file.next()        
+
+        if (has_hdr):
+            # skip column headers
+            csv_file.next()
+
         # read the sample data
         data = []
         for row in csv_file:
             data.append(row)
-        
+
         # convert the list to an numpy 2D array and return
         return np.array(data)
 

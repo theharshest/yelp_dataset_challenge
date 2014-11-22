@@ -19,10 +19,12 @@ meta_feat_info = dict([
     ('longitude',float),
     ('review_count',int),
     ('open',int),
-    ('last_review_date',int)
+    ('last_review_date',int),
+    ('census_tract',int)
 ])
 meta_feat_names = ['business_id','name','full_address','city','state',\
-                   'latitude','longitude','review_count','open','last_review_date']
+                   'latitude','longitude','review_count','open','last_review_date',\
+                   'census_tract']
 
 # filter used to filter business data
 restaurant_filter = {'categories.Restaurants':[True],
