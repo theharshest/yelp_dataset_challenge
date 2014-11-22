@@ -32,16 +32,19 @@ save the data features and meta data to the specified files.
 
 Inputs:
 
-  json_file_path:
-    the path the file containing JSON objects
+  json_bus_path:
+    the path to the file containing JSON business objects
+
+  json_review_path
+    the path to the file containing JSON review objects
   
   feat_file_path:
-    the path the file where the csv feature data will be written
+    the path to the file where the csv feature data will be written
 
   meta_file_path:
-    the path the file where the csv meta data will be written
+    the path to the file where the csv meta data will be written
 '''
-def convert_restaurant_json_to_csv(json_file_path, feat_file_path, meta_file_path):
+def convert_restaurant_json_to_csv(json_bus_path, json_review_path, feat_file_path, meta_file_path):
     # initialize the column names
     feat_columns = feat_info.data_feat_names
     meta_columns = feat_info.meta_feat_names
@@ -51,7 +54,10 @@ def convert_restaurant_json_to_csv(json_file_path, feat_file_path, meta_file_pat
         print('\nWARNING: data features have not been initialized\n')
     
     # load the restaurant objects
-    objects,junk = load_restaurants(json_file_path)
+    objects,junk = load_restaurants(json_bus_path)
+
+    # add last review date to objects
+    objects = add_last_review_dates(json_review_path, objects)
     
     # create feature matrix
     feat_mat = get_feature_matrix(objects, feat_columns)
@@ -62,31 +68,62 @@ def convert_restaurant_json_to_csv(json_file_path, feat_file_path, meta_file_pat
     # write meta data to file
     write_objects_csv(meta_file_path, objects, meta_columns)
 
-def get_last_review_dates(json_review_path, meta_file_path):
+'''
+Add the last review dates for each business in the specified list of
+business objects.
+
+Inputs:
+
+  json_review_path
+    the path to the file containing JSON review objects
+
+  buses
+    a list of dictionaties with each dictionary representing a business
+
+Outputs:
+
+  buses
+    the list of business objects with each business object augmented with its
+    last review date
+'''
+def add_last_review_dates(json_review_path, buses):
     # load the reviews
     # - the reviews don't indicate the usiness type - so have to load them all
     (reviews, revcols) = load_objects(json_review_path)
-
-    # load the meta data for the restaurants from the csv file
-    rests = read_feature_matrix_csv(meta_file_path)
     
     # create a dictionary to hold the last review dates
     last_review_dates = {}
-    for rest in rests:
+    for bus in buses:
         # add the business IDs for restaurants to the dictionary
-        last_review_dates[rest[0]] = None
+        last_review_dates[bus['business_id']] = None
 
-    # iterate through reviews and collect last review date
-    for review in reviews:
-        bus_id = review['business_id']
-        if (bus_id in last_review_dates):
-            review_date = str2date(review['date'])
-            current_last = last_review_dates[bus_id]
-            if (current_last is None or current_last < review_date):
-                print 'Set last revew date'
-                last_review_dates[bus_id] = review_date
+    # add the last review dates to the dictionary
+    with open(json_review_path, 'r') as fin:
+        # there is one JSON file per line, iterate over the lines and load the JSON
+        for line in fin:
+            # load the JSON object as a dictionary
+            review = json.loads(line)
 
-    return last_review_dates
+            # if the review is for one of the requested businesses then update
+            # the current last review date for that business if necessary
+            bid = review['business_id']
+            if (bid in last_review_dates):
+                review_date = str2date(review['date'])
+                current_last = last_review_dates[bid]
+                # if this review date is more recent then the current last review
+                # date then set the last review date to this review date
+                if (current_last is None or current_last < review_date):
+                    last_review_dates[bid] = review_date
+
+    # copy the last review dates into the business objects
+    for bus in buses:
+        bid = bus['business_id']
+        review_date = last_review_dates[bid]
+        if (review_date is not None):
+            bus['last_review_date'] = date2int(review_date)
+
+    # return the augmented business objects
+    return buses
 
 # ==================================================
 # Functions to load feature matrices from JSON files
@@ -497,3 +534,6 @@ def get_row(obj, columns=feat_info.data_feat_names):
 # ==================================================
 def str2date(datestr):
     return time.strptime(datestr, '%Y-%m-%d')
+
+def date2int(d):
+    return int(time.mktime(d))
