@@ -18,11 +18,12 @@ Summary statistics for the data set (as of Nov 6, 2014):
 
   13010 restaurants
     410 data features
-      9 meta data features
+     11 meta data features
 
 To recreate the restaurant_data.csv and restaurant_meta.csv files, do the following:
 
   (assume that DATA references the data directory and CODE the code directory from the git repository)
 
   $ python $CODE/createdatafiles.py $DATA/yelp_academic_dataset_business.json \
+           $DATA/yelp_academic_dataset_review.json $DATA/business_tracts.csv \
            $DATA/data_feats.csv $DATA/restaurant_data.csv $DATA/restaurant_meta.csv
