@@ -57,6 +57,7 @@ def convert_restaurant_json_to_csv(json_bus_path, json_review_path, csv_tract_pa
         print('\nWARNING: data features have not been initialized\n')
     
     # load the restaurant objects
+    print 'loading %s...' % json_bus_path
     objects,junk = load_restaurants(json_bus_path)
 
     # add last review date and census tract to objects
@@ -66,9 +67,11 @@ def convert_restaurant_json_to_csv(json_bus_path, json_review_path, csv_tract_pa
     feat_mat = get_feature_matrix(objects, feat_columns)
     
     # write the 2D feature array to file
+    print 'writing data features to %s...' % feat_file_path
     write_feature_matrix_csv(feat_file_path, feat_mat, feat_columns)
     
     # write meta data to file
+    print 'writing meta features to %s...' % meta_file_path
     write_objects_csv(meta_file_path, objects, meta_columns)
 
 '''
@@ -95,12 +98,14 @@ Outputs:
 def add_review_census_data(json_review_path, csv_tract_path, buses):
     # load the reviews
     # - the reviews don't indicate the usiness type - so have to load them all
+    print 'loading %s...' % json_review_path
     (reviews, revcols) = load_objects(json_review_path)
     
     # load the census tracts
     census_data = read_feature_matrix_csv(csv_tract_path,False)
 
     # initialize  dictionaries to hold the last review dates and census tract
+    print 'loading %s...' % csv_tract_path
     last_review_dates = {}
     census_tracts = {}
     for bus in buses:
@@ -110,6 +115,7 @@ def add_review_census_data(json_review_path, csv_tract_path, buses):
         census_tracts[bid] = None
 
     # populate census tract data
+    print 'processing census tracts...'
     for i in xrange(census_data.shape[0]):
         bid = census_data[i,0]
         tract = census_data[i,1]
@@ -118,6 +124,7 @@ def add_review_census_data(json_review_path, csv_tract_path, buses):
             census_tracts[bid] = tract
 
     # add the last review dates to the dictionary
+    print 'processing reviews...'
     with open(json_review_path, 'r') as fin:
         # there is one JSON file per line, iterate over the lines and load the JSON
         for line in fin:
@@ -136,6 +143,7 @@ def add_review_census_data(json_review_path, csv_tract_path, buses):
                     last_review_dates[bid] = review_date
 
     # copy the last review dates and census tracts into the business objects
+    print 'adding last review data and census tract to business objects...'
     for bus in buses:
         bid = bus['business_id']
         review_date = last_review_dates[bid]
