@@ -102,7 +102,7 @@ def add_review_census_data(json_review_path, csv_tract_path, buses):
     census_data = read_feature_matrix_csv(csv_tract_path,False)
 
     # initialize  dictionaries to hold the last review dates and census tract
-    print 'loading %s...' % csv_tract_path
+    print 'initialize dictionaries...'
     last_review_dates = {}
     census_tracts = {}
     for bus in buses:
