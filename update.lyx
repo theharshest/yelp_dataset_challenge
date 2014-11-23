@@ -1,0 +1,332 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman times
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family rmdefault
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize 11
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine natbib
+\cite_engine_type authoryear
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 1in
+\topmargin 1in
+\rightmargin 1in
+\bottommargin 1in
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Using Yelp to Predict Restaurant Closings
+\end_layout
+
+\begin_layout Author
+Harsh Jha, John Maloney and Dominic Smith
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Standard
+The task of our project remains the same as in the proposal.
+ Given some date 
+\begin_inset Formula $t$
+\end_inset
+
+ and area 
+\begin_inset Formula $A$
+\end_inset
+
+ we are building a model to predict the number of restaurants in 
+\begin_inset Formula $A$
+\end_inset
+
+ that will close within the 
+\begin_inset Formula $x$
+\end_inset
+
+ months following 
+\begin_inset Formula $t$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+Data
+\end_layout
+
+\begin_layout Standard
+Our data comes from three sources.
+ The first source is the Yelp dataset challenge.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Downloaded from http://www.yelp.com/dataset_challenge
+\end_layout
+
+\end_inset
+
+ We have restricted this sample to 12k restaurants operating in either Phoenix,
+ Las Vegas, or Madison.
+ These data contain descriptive attributes and user reviews for each restaurant.
+ The user reviews include textual comments and star ratings provided by
+ Yelp users while the descriptive attributes include categorical and ordinal
+ attributes such as type of food served, ambiance provided and price range.
+ Our second source is the U.S.
+ Decennial Census.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Downloaded from American Fact Finder at the Census Tract level.
+\end_layout
+
+\end_inset
+
+ These data contain data on the income level, ethnic composition, and population
+ of an area.
+ The final data are from the Local Area Unemployment Statistics published
+ by the Bureau of Labor Statistics (BLS).
+ They contain monthly unemployment rates at the city level.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Downloaded from http://www.bls.gov/lau/#data
+\end_layout
+
+\end_inset
+
+ The Yelp user reviews allow us to assess restaurant quality through review
+ stars and sentiment expressed in textual comments as well as measure business
+ attention through the number of reviews provided for each restaurant.
+ The Yelp descriptive attributes allow us to measure the degree of similarity
+ between restaurants.
+ Data from the Census allow us to control for whether a restaurant is in
+ an area where it should do well.
+ For example, high priced restaurants should do better in high income areas.
+ Data from the BLS allow us to control for aggregate economic conditions
+ which make all restaurants more or less likely to close.
+\end_layout
+
+\begin_layout Standard
+At this point we have downloaded all data we need from Yelp and the Census
+ and are finishing the preprocessing.
+ For the Yelp data we have matched each business to the appropriate Census
+ tract and mapped the descriptive attributes to numeric values.
+ We are working on estimating a closing date for each closed restaurant
+ based on the date of the restaurant's final review.
+ We currently have code running to preprocess the review text
+\begin_inset CommandInset citation
+LatexCommand citet
+key "Perkins2010NLTK2CB"
+
+\end_inset
+
+ so that we can perform sentiment analysis using a linear SVM classifier
+\begin_inset CommandInset citation
+LatexCommand citet
+key "2012WangSentiment"
+
+\end_inset
+
+.
+ We are working on developing measures of how much competition a restaurant
+ faces.
+ These measures will involve the number of 
+\begin_inset Quotes eld
+\end_inset
+
+similar
+\begin_inset Quotes erd
+\end_inset
+
+ restaurants within a given area.
+ We are also working on taking user specific fixed effects out of star ratings
+ to standardize what a given number of stars for a restaurant means.
+ Finally, we are extracting features such as date of first review and reviews
+ per month to use in our model.
+ The Census data have been downloaded and will be merged to the Yelp data
+ within the next few days.
+ The BLS data have not been downloaded yet, because the historic data are
+ revised regularly and we will want to use the most current data that is
+ available for the date we choose for our prediction task.
+\end_layout
+
+\begin_layout Section
+Methods
+\end_layout
+
+\begin_layout Standard
+The Yelp data cover 2004-2014.
+ Our initial plan is to select a date near the middle of the sample to serve
+ as the prediction date.
+ We will then use only information available on that date (reviews, unemployment
+ statistics, etc) to fit our model.
+ Our class labels will be based on how long a restaurant remains open after
+ the chosen date.
+ We are going to try running the classifier as both a two class problem
+ where the positive class is closed by X months and as a k-class problem
+ with classes such as 
+\begin_inset Quotes eld
+\end_inset
+
+closed 0-3 months after date
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+closed 4-9 months after
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+still open after 9 months
+\begin_inset Quotes erd
+\end_inset
+
+.
+ One area we are working on is the proper way to calculate error rates in
+ our model.
+ One option is to perform n-fold cross validation splitting data available
+ for restaurants that are open on the date we select.
+ We are concerned that we will have a small number of restaurants falling
+ into the closed category if we use this approach causing our closed class
+ to be a 
+\begin_inset Quotes eld
+\end_inset
+
+rare class
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Another option is to randomly pick 
+\begin_inset Formula $n$
+\end_inset
+
+ dates then use cross validation on the 
+\begin_inset Formula $n$
+\end_inset
+
+ dates.
+ This approach lets us make more use of the amount of data we have, but
+ there could be issues arising from the dates we select overlapping.
+ For example, you would not want to train using January 1, 2010 then use
+ February 1, 2010 as your test date.
+\end_layout
+
+\begin_layout Section
+Issues
+\end_layout
+
+\begin_layout Standard
+Our main issue so far has been the amount of time preprocessing the review
+ data has taken to run.
+ We expect that our sentiment analysis program will run for a long time
+ before providing results.
+ We are investigating the possible use of map-reduce techniques to improve
+ the performance of sentiment analysis.
+\end_layout
+
+\begin_layout Standard
+Another potential issue is the calculation of similarity between restaurants.
+ The vast majority of the descriptive attributes available in the Yelp data
+ set are categories to which a restaurant can be assigned.
+ These categories have been mapped to binary attributes indicating whether
+ or not the restaurant belongs to the category.
+ There are a large number of categories and each restaurant belongs to only
+ a few of them.
+ This means that the data set is very sparse.
+ This sparseness may cause problems when we attempt to calculate the similarity
+ between restaurants.
+ To alleviate this problem, we may need to aggregate some of the categories
+ or perform feature selection to identify attributes that are actually useful
+ for calculating similarity.
+ Regardless of the additional processing performed on this data, we will
+ need to choose a similarity measure that is appropriate for the data set.
+ Besides the binary attributes just discussed, the data set also includes
+ a smaller number of nominal and continuous attributes.
+ Selecting a similarity measure that is effective for such a mixed data
+ set could prove to be difficult.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "literature"
+options "plain"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document

@@ -24,6 +24,7 @@ import numpy as np
 import json
 import csv
 import feat_info
+import time
 
 '''
 Load data for restaurants, convert the data features into numeric data and then
@@ -31,16 +32,22 @@ save the data features and meta data to the specified files.
 
 Inputs:
 
-  json_file_path:
-    the path the file containing JSON objects
+  json_bus_path:
+    the path to the file containing JSON business objects
+
+  json_review_path
+    the path to the file containing JSON review objects
   
+  csv_tract_path
+    the path to the CSV file containing cencus tracts for businesses
+
   feat_file_path:
-    the path the file where the csv feature data will be written
+    the path to the file where the csv feature data will be written
 
   meta_file_path:
-    the path the file where the csv meta data will be written
+    the path to the file where the csv meta data will be written
 '''
-def convert_restaurant_json_to_csv(json_file_path, feat_file_path, meta_file_path):
+def convert_restaurant_json_to_csv(json_bus_path, json_review_path, csv_tract_path, feat_file_path, meta_file_path):
     # initialize the column names
     feat_columns = feat_info.data_feat_names
     meta_columns = feat_info.meta_feat_names
@@ -50,17 +57,105 @@ def convert_restaurant_json_to_csv(json_file_path, feat_file_path, meta_file_pat
         print('\nWARNING: data features have not been initialized\n')
     
     # load the restaurant objects
-    objects,junk = load_restaurants(json_file_path)
+    print 'loading %s...' % json_bus_path
+    objects,junk = load_restaurants(json_bus_path)
+
+    # add last review date and census tract to objects
+    objects = add_review_census_data(json_review_path, csv_tract_path, objects)
     
     # create feature matrix
     feat_mat = get_feature_matrix(objects, feat_columns)
     
     # write the 2D feature array to file
+    print 'writing data features to %s...' % feat_file_path
     write_feature_matrix_csv(feat_file_path, feat_mat, feat_columns)
     
     # write meta data to file
+    print 'writing meta features to %s...' % meta_file_path
     write_objects_csv(meta_file_path, objects, meta_columns)
+
+'''
+Add the last review dates and census tract for each business in the specified
+list of business objects.
+
+Inputs:
+
+  json_review_path
+    the path to the file containing JSON review objects
+
+  csv_tract_path
+    the path to the CSV file containing cencus tracts for businesses
+
+  buses
+    a list of dictionaties with each dictionary representing a business
+
+Outputs:
+
+  buses
+    the list of business objects with each business object augmented with its
+    last review date and census tract
+'''
+def add_review_census_data(json_review_path, csv_tract_path, buses):
+    # load the reviews
+    # - the reviews don't indicate the usiness type - so have to load them all
+    print 'loading %s...' % json_review_path
+    (reviews, revcols) = load_objects(json_review_path)
     
+    # load the census tracts
+    census_data = read_feature_matrix_csv(csv_tract_path,False)
+
+    # initialize  dictionaries to hold the last review dates and census tract
+    print 'loading %s...' % csv_tract_path
+    last_review_dates = {}
+    census_tracts = {}
+    for bus in buses:
+        bid = bus['business_id']
+        # add the business IDs for restaurants to the dictionaries
+        last_review_dates[bid] = None
+        census_tracts[bid] = None
+
+    # populate census tract data
+    print 'processing census tracts...'
+    for i in xrange(census_data.shape[0]):
+        bid = census_data[i,0]
+        tract = census_data[i,1]
+        # add census tract
+        if (tract): # is tract is not the empty string
+            census_tracts[bid] = tract
+
+    # add the last review dates to the dictionary
+    print 'processing reviews...'
+    with open(json_review_path, 'r') as fin:
+        # there is one JSON file per line, iterate over the lines and load the JSON
+        for line in fin:
+            # load the JSON object as a dictionary
+            review = json.loads(line)
+
+            # if the review is for one of the requested businesses then update
+            # the current last review date for that business if necessary
+            bid = review['business_id']
+            if (bid in last_review_dates):
+                review_date = str2date(review['date'])
+                current_last = last_review_dates[bid]
+                # if this review date is more recent then the current last review
+                # date then set the last review date to this review date
+                if (current_last is None or current_last < review_date):
+                    last_review_dates[bid] = review_date
+
+    # copy the last review dates and census tracts into the business objects
+    print 'adding last review data and census tract to business objects...'
+    for bus in buses:
+        bid = bus['business_id']
+        review_date = last_review_dates[bid]
+        tract = census_tracts[bid]
+        if (review_date is not None):
+            bus['last_review_date'] = date2int(review_date)
+        if (tract is not None):
+            bus['census_tract'] = tract
+
+    # return the augmented business objects
+    return buses
+
 # ==================================================
 # Functions to load feature matrices from JSON files
 # ==================================================
@@ -83,8 +178,8 @@ Outputs:
     column for each feature
 '''
 def load_restaurant_feature_matrix(file_path,columns=feat_info.data_feat_names):
-    return load_feature_matrix(file_path, columns=columns,\
-                               filter_key=feat_info.restaurants_key,filter_val=True)
+    return load_feature_matrix(file_path, columns=columns,
+                               filt=feat_info.restaurant_filter)
 
 '''
 Load a feature matrix from the specified JSON file path.
@@ -111,10 +206,10 @@ Outputs:
     a 2D numpy float array containing one line for each object and one
     column for each feature
 '''
-def load_feature_matrix(file_path,columns=feat_info.data_feat_names,filter_key=None,filter_val=None):
+def load_feature_matrix(file_path,columns=feat_info.data_feat_names,filt=None):
     with open(file_path, 'r') as fin:
         # load the feature matrix from the JSON file
-        return read_feature_matrix(fin,columns,filter_key,filter_val)
+        return read_feature_matrix(fin,columns,filt)
 
 # ==================================================
 # Functions to load JSON objects from JSON files
@@ -136,7 +231,7 @@ Outputs:
     list of keys that can be used to access JSON object attributes
 '''
 def load_restaurants(file_path):
-    return load_objects(file_path, filter_key=feat_info.restaurants_key,filter_val=True)
+    return load_objects(file_path, filt=feat_info.restaurant_filter)
 
 '''
 Load objects from the specified JSON file path and flatten the attributes into
@@ -147,12 +242,13 @@ Inputs:
   file_path:
     the path the file containing JSON objects
 
-  filter_key: (optional)
-    a key in the JSON file that will be used for filtering
-
-  filter_val: (optional)
-    the value to use for filtering, only objects where
-    ``obj[filter_key] == filter_val`` will be returned
+  filt: (optional)
+    dictionary containing the criteria that will be used to filter the
+    objects that are loaded, each dictonary key is the name of a JSON
+    attributes and each value is a list of possible values for that attribute,
+    for each key-value pair the following condition is evaluated: obj[key] in value,
+    each key-value pair defines criteria that are ORed together while the
+    key-value pair conditons are ANDed together
 
 Outputs:
 
@@ -162,9 +258,9 @@ Outputs:
   columns:
     list of keys that can be used to access JSON object attributes
 '''
-def load_objects(file_path, filter_key=None, filter_val=None):
+def load_objects(file_path, filt=None):
     with open(file_path, 'r') as fin:
-        return read_objects(fin, filter_key, filter_val)
+        return read_objects(fin, filt)
 
 # ====================================================
 # Functions to read feature matrices from file objects
@@ -181,12 +277,13 @@ Inputs:
     the columns to include in the feature matrix, by default all columns
     in the ``data_feat_names`` are included
 
-  filter_key: (optional)
-    a key in the JSON file that will be used for filtering
-
-  filter_val: (optional)
-    the value to use for filtering, only objects where
-    ``obj[filter_key] == filter_val`` will be returned
+  filt: (optional)
+    dictionary containing the criteria that will be used to filter the
+    objects that are loaded, each dictonary key is the name of a JSON
+    attributes and each value is a list of possible values for that attribute,
+    for each key-value pair the following condition is evaluated: obj[key] in value,
+    each key-value pair defines criteria that are ORed together while the
+    key-value pair conditons are ANDed together
 
 Outputs:
 
@@ -194,9 +291,9 @@ Outputs:
     a 2D numpy float array containing one line for each object and one
     column for each feature
 '''
-def read_feature_matrix(fin,columns=feat_info.data_feat_names,filter_key=None,filter_val=None):
+def read_feature_matrix(fin,columns=feat_info.data_feat_names,filt=None):
     # load the objects from the JSON file
-    objects,junk = read_objects(fin, filter_key, filter_val)
+    objects,junk = read_objects(fin, filt)
 
     # return features
     return get_feature_matrix(objects,columns)    
@@ -288,12 +385,13 @@ Inputs:
   fin:
     a file object from which JSON objects can be loaded
 
-  filter_key: (optional)
-    a key in the JSON file that will be used for filtering
-
-  filter_val: (optional)
-    the value to use for filtering, only objects where
-    ``obj[filter_key] == filter_val`` will be returned
+  filt: (optional)
+    dictionary containing the criteria that will be used to filter the
+    objects that are loaded, each dictonary key is the name of a JSON
+    attributes and each value is a list of possible values for that attribute,
+    for each key-value pair the following condition is evaluated: obj[key] in value,
+    each key-value pair defines criteria that are ORed together while the
+    key-value pair conditons are ANDed together
 
 Outputs:
 
@@ -303,7 +401,7 @@ Outputs:
   columns:
     list of keys that can be used to access JSON object attributes
 '''
-def read_objects(fin, filter_key=None, filter_val=None):
+def read_objects(fin, filt=None):
     # the list of objects to be populated
     objects = []
     # the list of columns to be populated
@@ -317,8 +415,21 @@ def read_objects(fin, filter_key=None, filter_val=None):
         # flatten the values from the line_contents dictionary
         obj = flatten_dict(line_contents, obj)
         
+        # set flag used to control whether this object is added
+        passed_filter = True
+
         # apply the filter if appropriate
-        if ( (filter_key is None) or ( (filter_key in obj) and (obj[filter_key] == filter_val) ) ):
+        if (filt is not None):
+            # check the filter conditions
+            for k,v in filt.iteritems():
+                if ((k not in obj) or (obj[k] not in v)):
+                    # this object doesn't pass the filter
+                    passed_filter=False
+                    # return to the parent loop
+                    break
+
+        # add the object to the list if it passed the filter
+        if (passed_filter):
             # add the new object to the list
             objects.append(obj)
             # update the list of columns names
@@ -389,22 +500,28 @@ Inputs:
   file_path:
     the path to the file holding the data to be loaded
 
+  has_hdr: (optional)
+    indicates whether or not the file contains headers, by default this is True
+
 Outputs:
 
   features:
     a 2D numpy array containing one line for each object and one
     column for each feature
 '''
-def read_feature_matrix_csv(file_path):
+def read_feature_matrix_csv(file_path, has_hdr=True):
     with open(file_path, 'rbU') as fin:
         csv_file = csv.reader(fin)
-        # skip column headers
-        csv_file.next()        
+
+        if (has_hdr):
+            # skip column headers
+            csv_file.next()
+
         # read the sample data
         data = []
         for row in csv_file:
             data.append(row)
-        
+
         # convert the list to an numpy 2D array and return
         return np.array(data)
 
@@ -448,3 +565,12 @@ def get_row(obj, columns=feat_info.data_feat_names):
         else:
             row.append('')
     return row
+
+# ==================================================
+# Functions to convert data
+# ==================================================
+def str2date(datestr):
+    return time.strptime(datestr, '%Y-%m-%d')
+
+def date2int(d):
+    return int(time.mktime(d))

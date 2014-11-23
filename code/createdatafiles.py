@@ -19,28 +19,30 @@ import datautils
 import sys
 
 def main():
-    if (len(sys.argv) < 5):
+    if (len(sys.argv) < 7):
         usage(sys.argv)
         return
 
-    jsonfile  = sys.argv[1]
-    datafeats = sys.argv[2]
-    datacsv   = sys.argv[3]
-    metacsv   = sys.argv[4]
+    jsonbusfile  = sys.argv[1]
+    jsonrevfile  = sys.argv[2]
+    csvtractfile = sys.argv[3]
+    datafeats    = sys.argv[4]
+    datacsv      = sys.argv[5]
+    metacsv      = sys.argv[6]
     
-    run_script(jsonfile, datafeats, datacsv, metacsv)
+    run_script(jsonbusfile, jsonrevfile, csvtractfile, datafeats, datacsv, metacsv)
 # end main
 
-def run_script(jsonfile, datafeats, datacsv, metacsv):
+def run_script(jsonbusfile, jsonrevfile, csvtractfile, datafeats, datacsv, metacsv):
     print('initializing data features')
     feat_info.init_data_feats(datafeats)
     
     print('creating data file and meta data file')
-    datautils.convert_restaurant_json_to_csv(jsonfile, datacsv, metacsv)
+    datautils.convert_restaurant_json_to_csv(jsonbusfile, jsonrevfile, csvtractfile, datacsv, metacsv)
 # end run_script
 
 def usage(argv):
-    print 'Usage: %s <jsonfile> <datafeats> <datacsv> <metacsv>' % argv[0]
+    print 'Usage: %s <jsonbusfile> <jsonrevfile> <csvtractfile> <datafeats> <datacsv> <metacsv>' % argv[0]
 # end usage
 
 # run main method when this file is run from command line
