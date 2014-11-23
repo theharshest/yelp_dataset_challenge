@@ -98,10 +98,7 @@ Outputs:
 def add_review_census_data(json_review_path, csv_tract_path, buses):
     # load the reviews
     # - the reviews don't indicate the usiness type - so have to load them all
-    print 'loading %s...' % json_review_path
-    (reviews, revcols) = load_objects(json_review_path)
-    
-    # load the census tracts
+    print 'loading %s...' % csv_tract_path
     census_data = read_feature_matrix_csv(csv_tract_path,False)
 
     # initialize  dictionaries to hold the last review dates and census tract
