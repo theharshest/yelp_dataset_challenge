@@ -38,6 +38,9 @@ Inputs:
   json_review_path
     the path to the file containing JSON review objects
   
+  json_review_path
+    the path to the file containing JSON tip objects
+
   csv_tract_path
     the path to the CSV file containing cencus tracts for businesses
 
@@ -49,13 +52,17 @@ Inputs:
 
   rev_file_path
     the path to the file where the csv review data will be written
+
+  tip_file_path
+    the path to the file where the csv tip data will be written
 '''
-def convert_restaurant_json_to_csv(json_bus_path, json_review_path, csv_tract_path, \
-           feat_file_path, meta_file_path, rev_file_path):
+def convert_restaurant_json_to_csv(json_bus_path, json_review_path, json_tip_path, csv_tract_path, \
+           feat_file_path, meta_file_path, rev_file_path, tip_file_path):
     # initialize the column names
     feat_columns = feat_info.data_feat_names
     meta_columns = feat_info.meta_feat_names
     rev_columns = feat_info.review_feat_names
+    tip_columns = feat_info.tip_feat_names
     
     # make sure the data features have been initialized
     if (len(feat_columns)==0):
@@ -65,8 +72,9 @@ def convert_restaurant_json_to_csv(json_bus_path, json_review_path, csv_tract_pa
     print 'loading %s...' % json_bus_path
     objects,junk = load_restaurants(json_bus_path)
 
-    # add last review date and census tract to objects
-    objects,reviews = process_review_census_data(json_review_path, csv_tract_path, objects)
+    # load the review and tip objects and add first/last review/tip date
+    # and census tract to objects
+    objects,reviews,tips = process_review_tip_census_data(json_review_path, json_tip_path, csv_tract_path, objects)
     
     # create feature matrix
     feat_mat = get_feature_matrix(objects, feat_columns)
@@ -82,6 +90,10 @@ def convert_restaurant_json_to_csv(json_bus_path, json_review_path, csv_tract_pa
     # write review data to file
     print 'writing review features to %s...' % rev_file_path
     write_objects_csv(rev_file_path, reviews, rev_columns)
+
+    # write tip data to file
+    print 'writing tip features to %s...' % tip_file_path
+    write_objects_csv(tip_file_path, tips, tip_columns)
 '''
 Collect the reviews for each business in the specified list of business objects.
 Also, add the first and last review dates and census tract for each business in
@@ -91,6 +103,9 @@ Inputs:
 
   json_review_path
     the path to the file containing JSON review objects
+
+  json_tip_path
+    the path to the file containing JSON tip objects
 
   csv_tract_path
     the path to the CSV file containing cencus tracts for businesses
@@ -107,10 +122,13 @@ Outputs:
   reviews
     the list of reviews that were written for one of the businesses identified
     in the list of businesses passed as input
+
+  tips
+    the list of tips that were written for one of the businesses identified
+    in the list of businesses passed as input
 '''
-def process_review_census_data(json_review_path, csv_tract_path, buses):
-    # load the reviews
-    # - the reviews don't indicate the usiness type - so have to load them all
+def process_review_tip_census_data(json_review_path, json_tip_path, csv_tract_path, buses):
+    # load the census tracts
     print 'loading %s...' % csv_tract_path
     census_data = read_feature_matrix_csv(csv_tract_path,False)
 
@@ -136,35 +154,66 @@ def process_review_census_data(json_review_path, csv_tract_path, buses):
             census_tracts[bid] = tract
 
     # collect the reviews that were written for one of the businesses in the list
-    # of businesses add identify the first/last review dates for each business
+    # of businesses add identify the first/last review/tip dates for each business
     reviews = []
     print 'processing reviews...'
     with open(json_review_path, 'r') as fin:
-        # there is one JSON file per line, iterate over the lines and load the JSON
+        # there is one JSON object per line, iterate over the lines and load the JSON
         for line in fin:
             # load the JSON object as a dictionary
             review = json.loads(line)
 
             # if the review is for one of the requested businesses then update
-            # the current first/last review date for that business if necessary
+            # the current first/last review/tip date for that business if necessary
             bid = review['business_id']
             if (bid in last_review_dates):
-                # append this review to ethe list of reviews
+                # append this review to the list of reviews
                 reviews.append(review)
                 # process review dates
                 review_date = str2date(review['date'])
                 review['date'] = date2int(review_date)
-                # process first and last review dates
+                # process first and last review/tip dates
                 current_first = first_review_dates[bid]
                 current_last = last_review_dates[bid]
-                # if this review date is earlier than the current first review
-                # date then set the first review date to this review date
+                # if this review date is earlier than the current first review/tip
+                # date then set the first review/tip date to this review date
                 if (current_first is None or current_first > review_date):
                     first_review_dates[bid] = review_date
-                # if this review date is more recent than the current last review
-                # date then set the last review date to this review date
+                # if this review date is more recent than the current last review/tip
+                # date then set the last review/tip date to this review date
                 if (current_last is None or current_last < review_date):
                     last_review_dates[bid] = review_date
+
+    # collect the tips that were written for one of the businesses in the list
+    # of businesses add update the first/last review/tip dates for each business
+    tips = []
+    print 'processing tips...'
+    with open(json_tip_path, 'r') as fin:
+        # there is one JSON object per line, iterate over the lines and load the JSON
+        for line in fin:
+            # load the JSON object as a dictionary
+            tip = json.loads(line)
+
+            # if the tip is for one of the requested businesses then update
+            # the current first/last review/tip date for that business if necessary
+            bid = review['business_id']
+            if (bid in last_review_dates):
+                # append this tip to the list of tips
+                tips.append(tip)
+                # process tip dates
+                tip_date = str2date(tip['date'])
+                tip['date'] = date2int(tip_date)
+                # process first and last review/tip dates
+                current_first = first_review_dates[bid]
+                current_last = last_review_dates[bid]
+                # if this tip date is earlier than the current first review/tip
+                # date then set the first review/tip date to this review date
+                if (current_first is None or current_first > tip_date):
+                    first_review_dates[bid] = tip_date
+                # if this tip date is more recent than the current last review/tip
+                # date then set the last review/tip date to this review date
+                if (current_last is None or current_last < tip_date):
+                    last_review_dates[bid] = tip_date
 
     # copy the last review dates and census tracts into the business objects
     print 'adding first/last review date and census tract to business objects...'
@@ -180,8 +229,8 @@ def process_review_census_data(json_review_path, csv_tract_path, buses):
         if (tract is not None):
             bus['census_tract'] = tract
 
-    # return the augmented business objects and list of reviews
-    return buses, reviews
+    # return the augmented business objects, list of reviews and list of tips
+    return buses, reviews, tips
 
 # ==================================================
 # Functions to load feature matrices from JSON files

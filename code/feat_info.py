@@ -41,6 +41,7 @@ smoking_values = [None,'no','outdoor','yes']
 wifi_values = [None,'no','paid','free']
 
 review_feat_names = ['review_id','business_id','user_id','date','stars']
+tip_feat_names = ['business_id','user_id','date','likes']
 
 '''
 Load data features from the specified file.  The file can be found here:

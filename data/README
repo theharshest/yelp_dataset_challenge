@@ -5,6 +5,7 @@ The data directory contains four data files:
   meta_feats.csv - contains the names of the meta data features
   restaurant_meta.csv - contains the meta data for the restaurants
   review_data.csv - contains the review data
+  tip_data.csv - contains the tip data
 
 The data was filtered to include only restaurants located in Arizona, Nevada or Wisconsin.
 
@@ -23,11 +24,11 @@ Summary statistics for the data set (as of Nov 29, 2014):
   694613 restaurant reviews
        5 review features
 
-To recreate the restaurant_data.csv, restaurant_meta.csv and review_data.csv files, do the following:
+To recreate the restaurant_data.csv, restaurant_meta.csv, review_data.csv and tip_data.csv files, do the following:
 
   (assume that DATA references the data directory and CODE the code directory from the git repository)
 
   $ python $CODE/createdatafiles.py $DATA/yelp_academic_dataset_business.json \
-           $DATA/yelp_academic_dataset_review.json $DATA/business_tracts.csv \
-           $DATA/data_feats.csv $DATA/restaurant_data.csv $DATA/restaurant_meta.csv \
-	   $DATA/review_data.csv
+           $DATA/yelp_academic_dataset_review.json $DATA/yelp_academic_dataset_tip.json
+	   $DATA/business_tracts.csv $DATA/data_feats.csv $DATA/restaurant_data.csv \
+	   $DATA/restaurant_meta.csv $DATA/review_data.csv $DATA/tip_data.csv
