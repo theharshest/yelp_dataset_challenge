@@ -196,7 +196,7 @@ def process_review_tip_census_data(json_review_path, json_tip_path, csv_tract_pa
 
             # if the tip is for one of the requested businesses then update
             # the current first/last review/tip date for that business if necessary
-            bid = review['business_id']
+            bid = tip['business_id']
             if (bid in last_review_dates):
                 # append this tip to the list of tips
                 tips.append(tip)
