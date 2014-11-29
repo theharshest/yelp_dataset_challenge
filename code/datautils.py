@@ -103,11 +103,13 @@ def add_review_census_data(json_review_path, csv_tract_path, buses):
 
     # initialize  dictionaries to hold the last review dates and census tract
     print 'initialize dictionaries...'
+    first_review_dates = {}
     last_review_dates = {}
     census_tracts = {}
     for bus in buses:
         bid = bus['business_id']
         # add the business IDs for restaurants to the dictionaries
+        first_review_dates[bid] = None
         last_review_dates[bid] = None
         census_tracts[bid] = None
 
@@ -133,20 +135,28 @@ def add_review_census_data(json_review_path, csv_tract_path, buses):
             bid = review['business_id']
             if (bid in last_review_dates):
                 review_date = str2date(review['date'])
+                current_first = first_review_dates[bid]
                 current_last = last_review_dates[bid]
-                # if this review date is more recent then the current last review
+                # if this review date is earlier than the current first review
+                # date then set the first review date to this review date
+                if (current_first is None or current_first > review_date):
+                    first_review_dates[bid] = review_date
+                # if this review date is more recent than the current last review
                 # date then set the last review date to this review date
                 if (current_last is None or current_last < review_date):
                     last_review_dates[bid] = review_date
 
     # copy the last review dates and census tracts into the business objects
-    print 'adding last review data and census tract to business objects...'
+    print 'adding first/last review date and census tract to business objects...'
     for bus in buses:
         bid = bus['business_id']
-        review_date = last_review_dates[bid]
+        first_review_date = first_review_dates[bid]
+        last_review_date = last_review_dates[bid]
         tract = census_tracts[bid]
-        if (review_date is not None):
-            bus['last_review_date'] = date2int(review_date)
+        if (first_review_date is not None):
+            bus['first_review_date'] = date2int(last_review_date)
+        if (last_review_date is not None):
+            bus['last_review_date'] = date2int(last_review_date)
         if (tract is not None):
             bus['census_tract'] = tract
 
