@@ -4,6 +4,7 @@ The data directory contains four data files:
   restaurant_data.csv - contains numeric feature data for the restaurants
   meta_feats.csv - contains the names of the meta data features
   restaurant_meta.csv - contains the meta data for the restaurants
+  review_data.csv - contains the review data
 
 The data was filtered to include only restaurants located in Arizona, Nevada or Wisconsin.
 
@@ -16,11 +17,13 @@ for the corresponding column in the restaurant_meta.csv file.
 
 Summary statistics for the data set (as of Nov 29, 2014):
 
-  13010 restaurants
-    410 data features
-     12 meta data features
+   13010 restaurants
+     410 restaurant data features
+      12 restaurant meta data features
+  694613 restaurant reviews
+       5 review features
 
-To recreate the restaurant_data.csv and restaurant_meta.csv files, do the following:
+To recreate the restaurant_data.csv, restaurant_meta.csv and review_data.csv files, do the following:
 
   (assume that DATA references the data directory and CODE the code directory from the git repository)
 
