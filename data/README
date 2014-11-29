@@ -14,11 +14,11 @@ Each row in the data_feats.csv file provides the name of the feature for the cor
 the restaurant_data.csv file.  Each row in the meta_feats.csv file provides the name of the feature
 for the corresponding column in the restaurant_meta.csv file.
 
-Summary statistics for the data set (as of Nov 22, 2014):
+Summary statistics for the data set (as of Nov 29, 2014):
 
   13010 restaurants
     410 data features
-     11 meta data features
+     12 meta data features
 
 To recreate the restaurant_data.csv and restaurant_meta.csv files, do the following:
 
