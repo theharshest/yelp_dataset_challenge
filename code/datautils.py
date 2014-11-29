@@ -46,11 +46,16 @@ Inputs:
 
   meta_file_path:
     the path to the file where the csv meta data will be written
+
+  rev_file_path
+    the path to the file where the csv review data will be written
 '''
-def convert_restaurant_json_to_csv(json_bus_path, json_review_path, csv_tract_path, feat_file_path, meta_file_path):
+def convert_restaurant_json_to_csv(json_bus_path, json_review_path, csv_tract_path, \
+           feat_file_path, meta_file_path, rev_file_path):
     # initialize the column names
     feat_columns = feat_info.data_feat_names
     meta_columns = feat_info.meta_feat_names
+    rev_columns = feat_info.review_feat_names
     
     # make sure the data features have been initialized
     if (len(feat_columns)==0):
@@ -61,7 +66,7 @@ def convert_restaurant_json_to_csv(json_bus_path, json_review_path, csv_tract_pa
     objects,junk = load_restaurants(json_bus_path)
 
     # add last review date and census tract to objects
-    objects = add_review_census_data(json_review_path, csv_tract_path, objects)
+    objects,reviews = process_review_census_data(json_review_path, csv_tract_path, objects)
     
     # create feature matrix
     feat_mat = get_feature_matrix(objects, feat_columns)
@@ -74,9 +79,13 @@ def convert_restaurant_json_to_csv(json_bus_path, json_review_path, csv_tract_pa
     print 'writing meta features to %s...' % meta_file_path
     write_objects_csv(meta_file_path, objects, meta_columns)
 
+    # write review data to file
+    print 'writing review features to %s...' % rev_file_path
+    write_objects_csv(rev_file_path, reviews, rev_columns)
 '''
-Add the last review dates and census tract for each business in the specified
-list of business objects.
+Collect the reviews for each business in the specified list of business objects.
+Also, add the first and last review dates and census tract for each business in
+the specified list of business objects.
 
 Inputs:
 
@@ -94,8 +103,12 @@ Outputs:
   buses
     the list of business objects with each business object augmented with its
     last review date and census tract
+
+  reviews
+    the list of reviews that were written for one of the businesses identified
+    in the list of businesses passed as input
 '''
-def add_review_census_data(json_review_path, csv_tract_path, buses):
+def process_review_census_data(json_review_path, csv_tract_path, buses):
     # load the reviews
     # - the reviews don't indicate the usiness type - so have to load them all
     print 'loading %s...' % csv_tract_path
@@ -122,7 +135,9 @@ def add_review_census_data(json_review_path, csv_tract_path, buses):
         if (tract): # is tract is not the empty string
             census_tracts[bid] = tract
 
-    # add the last review dates to the dictionary
+    # collect the reviews that were written for one of the businesses in the list
+    # of businesses add identify the first/last review dates for each business
+    reviews = []
     print 'processing reviews...'
     with open(json_review_path, 'r') as fin:
         # there is one JSON file per line, iterate over the lines and load the JSON
@@ -131,10 +146,15 @@ def add_review_census_data(json_review_path, csv_tract_path, buses):
             review = json.loads(line)
 
             # if the review is for one of the requested businesses then update
-            # the current last review date for that business if necessary
+            # the current first/last review date for that business if necessary
             bid = review['business_id']
             if (bid in last_review_dates):
+                # append this review to ethe list of reviews
+                reviews.append(review)
+                # process review dates
                 review_date = str2date(review['date'])
+                review['date'] = date2int(review_date)
+                # process first and last review dates
                 current_first = first_review_dates[bid]
                 current_last = last_review_dates[bid]
                 # if this review date is earlier than the current first review
@@ -160,8 +180,8 @@ def add_review_census_data(json_review_path, csv_tract_path, buses):
         if (tract is not None):
             bus['census_tract'] = tract
 
-    # return the augmented business objects
-    return buses
+    # return the augmented business objects and list of reviews
+    return buses, reviews
 
 # ==================================================
 # Functions to load feature matrices from JSON files

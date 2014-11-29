@@ -40,6 +40,8 @@ byob_values = [None,'no','yes_corkage','yes_free']
 smoking_values = [None,'no','outdoor','yes']
 wifi_values = [None,'no','paid','free']
 
+review_feat_names = ['review_id','business_id','user_id','date','stars']
+
 '''
 Load data features from the specified file.  The file can be found here:
 
