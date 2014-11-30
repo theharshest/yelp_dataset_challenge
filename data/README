@@ -47,7 +47,8 @@ To recreate the JSON data files, do the following:
   (assume that DATA references the data directory and CODE the code directory from the git repository)
 
   $ python $CODE/createdatafiles.py $DATA/yelp_academic_dataset_business.json $DATA/business.json $DATA/yelp_academic_dataset_review.json $DATA/review.json $DATA/yelp_academic_dataset_tip.json $DATA/tip.json $DATA/business_tracts.csv
-  $ tar cvzf $DATA/filtered-json.tar.gz $DATA/business.json $DATA/review.json $DATA/tip.json
+  $ cd $DATA
+  $ tar cvzf filtered-json.tar.gz business.json review.json tip.json
 
 To extract the JSON data files from the archive:
 
