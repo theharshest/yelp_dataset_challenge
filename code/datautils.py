@@ -27,28 +27,30 @@ import time
 import io
 
 '''
-Generate a data set that contains values that were available on the specified
-prediction date.
+Generate data sets that contain values that were available on the specified
+prediction dates.  Each generated dataset will be written to the file:
+
+   <outdir>/<pdate>.json
 
 Inputs:
 
-  pdatestr:
-    the prediction date to use for generating the dataset (a string formatted
-    as YYYY-MM-DD.
+  pdates:
+    a list of prediction dates to use for generating the datasets (each date is
+    a string formatted as YYYY-MM-DD)
 
   busjson:
-    the path to the file containing JSON business objects
+    the path to the file containing all the JSON business objects
 
   revjson:
-    the path to the file containing JSON review objects
+    the path to the file containing all the JSON review objects
 
   tipjson:
-    the path to the file containing JSON tip objects
+    the path to the file containing all the JSON tip objects
 
-  outfile:
-    the path to the file where the resulting dataset should be written
+  outdir:
+    the path to the directory where the resulting datasets should be written
 '''
-def gen_dataset_file(pdatestr, busjson, revjson, tipjson, outfile):
+def gen_dataset_files(pdates, busjson, revjson, tipjson, outdir):
     # load business objects
     print 'Loading business objects from %s...' % busjson
     all_buses, junk = load_objects(busjson)
@@ -61,15 +63,23 @@ def gen_dataset_file(pdatestr, busjson, revjson, tipjson, outfile):
     print 'loading tip objects from %s...' % tipjson
     all_tips, junk = load_objects(tipjson)
 
-    # convert prediction date to int (seconds since epoch)
-    pdate = date2int(str2date(pdatestr))
+    # generate the datsets
+    for pdatestr in pdates:
+        # convert prediction date to int (seconds since epoch)
+        pdate = date2int(str2date(pdatestr))
 
-    print 'generating dataset for prediction date %s (%d)...' % (pdatestr,pdate)
-    buses = gen_dataset(pdate, all_buses, all_reviews, all_tips)
+        # generate the dataset for the specified prediction date
+        print 'generating dataset for prediction date %s (%d)...' % (pdatestr,pdate)
+        buses = gen_dataset(pdate, all_buses, all_reviews, all_tips)
 
-    print 'writing %d JSON objects to %s...' % (len(buses),outfile)
-    feats = ['business_id', 'class', 'avg_star_rating', 'review_count', 'tip_count']
-    save_objects(buses, outfile, attfilt=feats)
+        # generate filename for dataset
+        outfile = outdir + '/' + pdatestr + '.json'
+
+        # write dataset to file
+        print 'writing %d JSON objects to %s...' % (len(buses),outfile)
+        feats = ['business_id', 'class', 'avg_star_rating', 'review_count', 'tip_count']
+        save_objects(buses, outfile, attfilt=feats)
+    # end for
 # end gen_dataset_file
 
 '''
@@ -111,9 +121,10 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     buses = {}
     class_counts = [0, 0, 0, 0, 0]
     for bus in all_buses:
-        open_date = bus['first_review_date']
-        close_date = bus['last_review_date']
-        if ((open_date <= pdate) and (close_date > pdate)):
+        open_date = bus.get('first_review_date',None)
+        close_date = bus.get('last_review_date',None)
+        if ((open_date is not None) and (open_date <= pdate) and
+            (close_date is not None) and (close_date > pdate)):
             # business meets the criteria - add to dictionary
             buses[bus['business_id']]=bus
             # set class label for business
@@ -139,12 +150,13 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
                 class_counts[4] = class_counts[4] + 1
     # end for
 
-    print 'number of businesses that passed date filter: %d' % len(buses.values())
+    print '  number of businesses that passed date filter: %d' % len(buses.values())
     for i in xrange(5):
-        print '  class %1d: %5d' % (i,class_counts[i])
+        print '    class %1d: %5d' % (i,class_counts[i])
 
     # filter reviews that do not pertain to one of the remaining businesses or
     # were not submitted before pdate
+    all_rev_count = 0
     for review in all_reviews:
         # look for the reviewed business
         bid = review['business_id']
@@ -156,12 +168,16 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
             if (rdate <= pdate):
                 # update review count
                 rcount = obj.get('review_count',0)
-                obj['review_cont'] = rcount + 1
+                obj['review_count'] = rcount + 1
                 # update star total
-                stars = review['stars']
+                stars = review.get('stars',0)
                 stotal = obj.get('star_total',0)
                 obj['star_total'] = stotal + stars
+
+                all_rev_count = all_rev_count + 1
     # end for
+
+    print '  number of reviews that passed filter: %d' % all_rev_count
 
     # calculate average star ranking
     for bus in buses.values():
@@ -175,6 +191,7 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
 
     # filter tips that do not pertain to one of the remaining businesses or
     # were not submitted before pdate
+    all_tip_count = 0
     for tip in all_tips:
         # look for the reviewed business
         bid = tip['business_id']
@@ -185,8 +202,12 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
             tdate = tip['date']
             if (tdate <= pdate):
                 tcount = obj.get('tip_count',0)
-                obj['tip_cont'] = tcount + 1
+                obj['tip_count'] = tcount + 1
+
+                all_tip_count = all_tip_count + 1
     # end for
+
+    print '  number of tips that passed filter: %d' % all_tip_count
 
     # add census data
     # TBD
