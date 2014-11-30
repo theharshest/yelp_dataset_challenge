@@ -6,40 +6,51 @@ Created on Sun Nov  2 20:34:12 2014
 """
 import csv
 
+# attribute names
+business_id = 'business_id'
+review_id = 'review_id'
+tip_id = 'tip_id'
+user_id = 'user_id'
+label = 'label'
+avg_star_rating = 'avg_star_rating'
+review_count = 'review_count'
+tip_count = 'tip_count'
+date = 'date'
+first_review_date = 'first_review_date'
+last_review_date = 'last_review_date'
+stars = 'stars'
+likes = 'likes'
+star_total = 'star_total'
+state = 'state'
+census_tract = 'census_tract'
+restaurants = 'categories.Restaurants'
+
+# features included in datasets generated for specified prediction dates
+pdate_dataset_feat_names = [business_id, label, avg_star_rating, review_count, tip_count]
+
 data_feat_info = dict([])
 data_feat_names = []
 
 bus_feat_info = dict([
-    ('business_id',str),
+    (business_id,str),
 #    ('name',str),
 #    ('full_address',str),
 #    ('city',str),
-    ('state',str),
+    (state,str),
 #    ('latitude',float),
 #    ('longitude',float),
 #    ('review_count',int),
 #    ('open',int),
-    ('first_review_date',int),
-    ('last_review_date',int),
-    ('census_tract',int)
+    (first_review_date,int),
+    (last_review_date,int),
+    (census_tract,int)
 ])
 
-bus_feat_names = ['business_id',
-#                   'name',
-#                   'full_address',
-#                   'city',
-                   'state',
-#                   'latitude',
-#                   'longitude',
-#                   'review_count',
-#                   'open',
-                   'first_review_date',
-                   'last_review_date',
-                   'census_tract']
+bus_feat_names = bus_feat_info.values()
 
 # filter used to filter business data
-restaurant_filter = {'categories.Restaurants':[True],
-                     'state':['AZ','NV','WI']}
+restaurant_filter = {restaurants:[True],
+                     state:['AZ','NV','WI']}
 
 # values for ordinal attributes
 attire_values = [None, 'casual', 'dressy', 'formal']
@@ -50,8 +61,8 @@ byob_values = [None,'no','yes_corkage','yes_free']
 smoking_values = [None,'no','outdoor','yes']
 wifi_values = [None,'no','paid','free']
 
-rev_feat_names = ['review_id','business_id','user_id','date','stars']
-tip_feat_names = ['business_id','user_id','date','likes']
+rev_feat_names = [review_id,business_id,user_id,date,stars]
+tip_feat_names = [business_id,user_id,date,likes]
 
 '''
 Load data features from the specified file.  The file can be found here:
@@ -84,8 +95,8 @@ def init_data_feats(file_path):
         data_feat_info['attributes.Noise Level'] = noise_values
         
         # set the type for numeric attributes
-        data_feat_info['review_count'] = int
-        data_feat_info['stars'] = float
+        data_feat_info[review_count] = int
+        data_feat_info[stars] = float
         
         return data_feat_info,data_feat_names
 

@@ -22,7 +22,7 @@ This modified version is based on the original version submitted on Oct 16, 2014
 import numpy as np
 import json
 import csv
-import feat_info
+import feat_info as fi
 import time
 import io
 
@@ -77,8 +77,7 @@ def gen_dataset_files(pdates, busjson, revjson, tipjson, outdir):
 
         # write dataset to file
         print 'writing %d JSON objects to %s...' % (len(buses),outfile)
-        feats = ['business_id', 'class', 'avg_star_rating', 'review_count', 'tip_count']
-        save_objects(buses, outfile, attfilt=feats)
+        save_objects(buses, outfile, attfilt=fi.pdate_dataset_feat_names)
     # end for
 # end gen_dataset_file
 
@@ -121,32 +120,32 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     buses = {}
     class_counts = [0, 0, 0, 0, 0]
     for bus in all_buses:
-        open_date = bus.get('first_review_date',None)
-        close_date = bus.get('last_review_date',None)
+        open_date = bus.get(fi.first_review_date,None)
+        close_date = bus.get(fi.last_review_date,None)
         if ((open_date is not None) and (open_date <= pdate) and
             (close_date is not None) and (close_date > pdate)):
             # business meets the criteria - add to dictionary
-            buses[bus['business_id']]=bus
+            buses[bus[fi.business_id]]=bus
             # set class label for business
             if ((close_date > pdate) and (close_date <= pdate_plus_3mos)):
                 # closed 0-3 months after pdate
-                bus['class'] = 0
+                bus[fi.label] = 0
                 class_counts[0] = class_counts[0] + 1
             elif ((close_date > pdate_plus_3mos) and (close_date <= pdate_plus_6mos)):
                 # closed 3-6 months after pdate
-                bus['class'] = 1
+                bus[fi.label] = 1
                 class_counts[1] = class_counts[1] + 1
             elif ((close_date > pdate_plus_6mos) and (close_date <= pdate_plus_9mos)):
                 # closed 6-9 months after pdate
-                bus['class'] = 2
+                bus[fi.label] = 2
                 class_counts[2] = class_counts[2] + 1
             elif ((close_date > pdate_plus_9mos) and (close_date <= pdate_plus_12mos)):
                 # closed 9-12 months after pdate
-                bus['class'] = 3
+                bus[fi.label] = 3
                 class_counts[3] = class_counts[3] + 1
             elif (close_date > pdate_plus_12mos):
                 # still open 12 months after pdate
-                bus['class'] = 4
+                bus[fi.label] = 4
                 class_counts[4] = class_counts[4] + 1
     # end for
 
@@ -159,20 +158,20 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     all_rev_count = 0
     for review in all_reviews:
         # look for the reviewed business
-        bid = review['business_id']
+        bid = review[fi.business_id]
         obj = buses.get(bid, None)
 
         # update review_count, star_count and star_total for the business
         if (obj is not None):
-            rdate = review['date']
+            rdate = review[fi.date]
             if (rdate <= pdate):
                 # update review count
-                rcount = obj.get('review_count',0)
-                obj['review_count'] = rcount + 1
+                rcount = obj.get(fi.review_count,0)
+                obj[fi.review_count] = rcount + 1
                 # update star total
-                stars = review.get('stars',0)
-                stotal = obj.get('star_total',0)
-                obj['star_total'] = stotal + stars
+                stars = review.get(fi.stars,0)
+                stotal = obj.get(fi.star_total,0)
+                obj[fi.star_total] = stotal + stars
 
                 all_rev_count = all_rev_count + 1
     # end for
@@ -182,27 +181,27 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     # calculate average star ranking
     for bus in buses.values():
         # get review count and star total
-        rcount = bus.get('review_count',0)
-        stotal = bus.get('star_total',0)
+        rcount = bus.get(fi.review_count,0)
+        stotal = bus.get(fi.star_total,0)
 
         # calculate average star rating
         if (rcount > 0):
-            bus['avg_star_rating'] = float(stotal)/float(rcount)
+            bus[fi.avg_star_rating] = float(stotal)/float(rcount)
 
     # filter tips that do not pertain to one of the remaining businesses or
     # were not submitted before pdate
     all_tip_count = 0
     for tip in all_tips:
         # look for the reviewed business
-        bid = tip['business_id']
+        bid = tip[fi.business_id]
         obj = buses.get(bid, None)
 
         # increment tip cunt for the business
         if (obj is not None):
-            tdate = tip['date']
+            tdate = tip[fi.date]
             if (tdate <= pdate):
-                tcount = obj.get('tip_count',0)
-                obj['tip_count'] = tcount + 1
+                tcount = obj.get(fi.tip_count,0)
+                obj[fi.tip_count] = tcount + 1
 
                 all_tip_count = all_tip_count + 1
     # end for
@@ -251,9 +250,9 @@ def filter_yelp_data(in_busjson, out_busjson, in_revjson, out_revjson,
                      in_tipjson, out_tipjson, in_censuscsv):
     # initialize the column names
     #feat_columns = feat_info.data_feat_names
-    bus_feats = feat_info.bus_feat_names
-    rev_feats = feat_info.rev_feat_names
-    tip_feats = feat_info.tip_feat_names
+    bus_feats = fi.bus_feat_names
+    rev_feats = fi.rev_feat_names
+    tip_feats = fi.tip_feat_names
     
     # make sure the data features have been initialized
     #if (len(feat_columns)==0):
@@ -330,7 +329,7 @@ def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
     last_review_dates = {}
     census_tracts = {}
     for bus in buses:
-        bid = bus['business_id']
+        bid = bus[fi.business_id]
         # add the business IDs for restaurants to the dictionaries
         first_review_dates[bid] = None
         last_review_dates[bid] = None
@@ -357,13 +356,13 @@ def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
 
             # if the review is for one of the requested businesses then update
             # the current first/last review/tip date for that business if necessary
-            bid = review['business_id']
+            bid = review[fi.business_id]
             if (bid in last_review_dates):
                 # append this review to the list of reviews
                 reviews.append(review)
                 # process review dates
-                review_date = str2date(review['date'])
-                review['date'] = date2int(review_date)
+                review_date = str2date(review[fi.date])
+                review[fi.date] = date2int(review_date)
                 # process first and last review/tip dates
                 current_first = first_review_dates[bid]
                 current_last = last_review_dates[bid]
@@ -388,13 +387,13 @@ def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
 
             # if the tip is for one of the requested businesses then update
             # the current first/last review/tip date for that business if necessary
-            bid = tip['business_id']
+            bid = tip[fi.business_id]
             if (bid in last_review_dates):
                 # append this tip to the list of tips
                 tips.append(tip)
                 # process tip dates
-                tip_date = str2date(tip['date'])
-                tip['date'] = date2int(tip_date)
+                tip_date = str2date(tip[fi.date])
+                tip[fi.date] = date2int(tip_date)
                 # process first and last review/tip dates
                 current_first = first_review_dates[bid]
                 current_last = last_review_dates[bid]
@@ -410,16 +409,16 @@ def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
     # copy the last review dates and census tracts into the business objects
     print 'adding first/last review date and census tract to business objects...'
     for bus in buses:
-        bid = bus['business_id']
+        bid = bus[fi.business_id]
         first_review_date = first_review_dates[bid]
         last_review_date = last_review_dates[bid]
         tract = census_tracts[bid]
         if (first_review_date is not None):
-            bus['first_review_date'] = date2int(first_review_date)
+            bus[fi.first_review_date] = date2int(first_review_date)
         if (last_review_date is not None):
-            bus['last_review_date'] = date2int(last_review_date)
+            bus[fi.last_review_date] = date2int(last_review_date)
         if (tract is not None):
-            bus['census_tract'] = tract
+            bus[fi.census_tract] = tract
 
     # return the augmented business objects, list of reviews and list of tips
     return buses, reviews, tips
@@ -445,9 +444,9 @@ Outputs:
     a 2D numpy float array containing one line for each object and one
     column for each feature
 '''
-def load_restaurant_feature_matrix(file_path,columns=feat_info.data_feat_names):
+def load_restaurant_feature_matrix(file_path,columns=fi.data_feat_names):
     return load_feature_matrix(file_path, columns=columns,
-                               filt=feat_info.restaurant_filter)
+                               filt=fi.restaurant_filter)
 
 '''
 Load a feature matrix from the specified JSON file path.
@@ -474,7 +473,7 @@ Outputs:
     a 2D numpy float array containing one line for each object and one
     column for each feature
 '''
-def load_feature_matrix(file_path,columns=feat_info.data_feat_names,filt=None):
+def load_feature_matrix(file_path,columns=fi.data_feat_names,filt=None):
     with open(file_path, 'r') as fin:
         # load the feature matrix from the JSON file
         return read_feature_matrix(fin,columns,filt)
@@ -499,7 +498,7 @@ Outputs:
     list of keys that can be used to access JSON object attributes
 '''
 def load_restaurants(file_path):
-    return load_objects(file_path, filt=feat_info.restaurant_filter)
+    return load_objects(file_path, filt=fi.restaurant_filter)
 
 '''
 Load objects from the specified JSON file path and flatten the attributes into
@@ -588,7 +587,7 @@ Outputs:
     a 2D numpy float array containing one line for each object and one
     column for each feature
 '''
-def read_feature_matrix(fin,columns=feat_info.data_feat_names,filt=None):
+def read_feature_matrix(fin,columns=fi.data_feat_names,filt=None):
     # load the objects from the JSON file
     objects,junk = read_objects(fin, filt)
 
@@ -614,7 +613,7 @@ Outputs:
     a 2D numpy float array containing one line for each object and one
     column for each feature
 '''
-def get_feature_matrix(objects, columns=feat_info.data_feat_names):
+def get_feature_matrix(objects, columns=fi.data_feat_names):
     # get the number of restaurants
     N = len(objects)
     
@@ -626,8 +625,8 @@ def get_feature_matrix(objects, columns=feat_info.data_feat_names):
     for obj,i in zip(objects, xrange(N)):
         for j in xrange(D):
             key = columns[j]
-            dtype = feat_info.data_feat_info[key] \
-                    if (key in feat_info.data_feat_info) else None
+            dtype = fi.data_feat_info[key] \
+                    if (key in fi.data_feat_info) else None
             features[i,j] = get_value(obj, key, dtype)
 
     # return the result as a 2D numpy array
@@ -893,7 +892,7 @@ Inputs:
   columns:
     list of keys for attributes to be written to the file
 '''
-def write_objects_csv(file_path, objects, columns=feat_info.data_feat_names):
+def write_objects_csv(file_path, objects, columns=fi.data_feat_names):
     with open(file_path, 'wb+') as fout:
         csv_file = csv.writer(fout)
         # write column headers
@@ -905,7 +904,7 @@ def write_objects_csv(file_path, objects, columns=feat_info.data_feat_names):
 '''
 Return a csv compatible row containing values for the specified columns.
 '''
-def get_row(obj, columns=feat_info.data_feat_names):
+def get_row(obj, columns=fi.data_feat_names):
     row = []
     for key in columns:
         val = obj[key] if (key in obj) else None
