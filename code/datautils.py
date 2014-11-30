@@ -77,7 +77,7 @@ def gen_dataset_files(pdates, busjson, revjson, tipjson, outdir):
 
         # write dataset to file
         print 'writing %d JSON objects to %s...' % (len(buses),outfile)
-        save_objects(buses, outfile, attfilt=fi.pdate_dataset_feat_names)
+        save_objects(buses, outfile)
     # end for
 # end gen_dataset_file
 
@@ -104,7 +104,8 @@ Outputs:
 
   buses:
     the JSON business objects selected for the dataset augmented with review
-    and tip data (and eventually with census and economic data)
+    and tip data (and eventually with census and economic data), a copy is made
+    of the original JSON objects so that the objects in all_buses are not modified
 '''
 def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     # calculate duration of time periods in seconds
@@ -119,12 +120,13 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     # and set the class label for those that remain
     buses = {}
     class_counts = [0, 0, 0, 0, 0]
-    for bus in all_buses:
-        open_date = bus.get(fi.first_review_date,None)
-        close_date = bus.get(fi.last_review_date,None)
+    for orig_bus in all_buses:
+        open_date = orig_bus.get(fi.first_review_date,None)
+        close_date = orig_bus.get(fi.last_review_date,None)
         if ((open_date is not None) and (open_date <= pdate) and
             (close_date is not None) and (close_date > pdate)):
-            # business meets the criteria - add to dictionary
+            # business meets the criteria - add a copy to dictionary
+            bus = orig_bus.copy()
             buses[bus[fi.business_id]]=bus
             # set class label for business
             if ((close_date > pdate) and (close_date <= pdate_plus_3mos)):
@@ -178,16 +180,6 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
 
     print '  number of reviews that passed filter: %d' % all_rev_count
 
-    # calculate average star ranking
-    for bus in buses.values():
-        # get review count and star total
-        rcount = bus.get(fi.review_count,0)
-        stotal = bus.get(fi.star_total,0)
-
-        # calculate average star rating
-        if (rcount > 0):
-            bus[fi.avg_star_rating] = float(stotal)/float(rcount)
-
     # filter tips that do not pertain to one of the remaining businesses or
     # were not submitted before pdate
     all_tip_count = 0
@@ -213,6 +205,19 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
 
     # add economic data
     # TBD
+
+    # calculate average star ranking and remove unneeded attributes
+    for bus in buses.values():
+        # get review count and star total
+        rcount = bus.get(fi.review_count,0)
+        stotal = bus.get(fi.star_total,0)
+
+        # calculate average star rating
+        if (rcount > 0):
+            bus[fi.avg_star_rating] = float(stotal)/float(rcount)
+
+        # filter out unneeded attributes
+        filter_dict(bus, fi.pdate_dataset_feat_names)
 
     # return the final list of businesses
     return buses.values()
@@ -798,9 +803,7 @@ def write_objects(objects, fout, filt=None, attfilt=None):
 
         # filter the attributes
         if (passed_filter and (attfilt is not None)):
-            for key in obj.keys():
-                if (key not in attfilt):
-                    obj.pop(key, None)
+            filter_dict(obj, fi.pdate_dataset_feat_names)
 
         # add the object to the list if it passed the filter
         if (passed_filter):
@@ -808,6 +811,15 @@ def write_objects(objects, fout, filt=None, attfilt=None):
             fout.write(unicode(json.dumps(obj,ensure_ascii=False))+'\n')
     # end for
 # end write_objects
+
+'''
+Filter the keys in the dictionary.
+'''
+def filter_dict(d, attfilt):
+    for key in d.keys():
+        if (key not in attfilt):
+            d.pop(key, None)
+    return d
 
 # ==================================================
 # Functions to read/write feature matrix as csv data
