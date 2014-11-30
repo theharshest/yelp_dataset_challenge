@@ -52,4 +52,5 @@ To recreate the JSON data files, do the following:
 
 To extract the JSON data files from the archive:
 
-  $ tar xvf $DATA/filtered-json.tar.gz
+  $ cd $DATA
+  $ tar xvf filtered-json.tar.gz
