@@ -49,6 +49,6 @@ To recreate the JSON data files, do the following:
   $ python $CODE/createdatafiles.py $DATA/yelp_academic_dataset_business.json $DATA/business.json $DATA/yelp_academic_dataset_review.json $DATA/review.json $DATA/yelp_academic_dataset_tip.json $DATA/tip.json $DATA/business_tracts.csv
   $ tar cvzf $DATA/filtered-json.tar.gz $DATA/business.json $DATA/review.json $DATA/tip.json
 
-To extract the JSAON data files from the archive:
+To extract the JSON data files from the archive:
 
   $ tar xvf $DATA/filtered-json.tar.gz
