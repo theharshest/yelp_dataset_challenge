@@ -46,7 +46,7 @@ bus_feat_info = dict([
     (census_tract,int)
 ])
 
-bus_feat_names = bus_feat_info.values()
+bus_feat_names = bus_feat_info.keys()
 
 # filter used to filter business data
 restaurant_filter = {restaurants:[True],
