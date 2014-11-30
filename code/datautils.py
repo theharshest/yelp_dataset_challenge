@@ -217,7 +217,7 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
             bus[fi.avg_star_rating] = float(stotal)/float(rcount)
 
         # filter out unneeded attributes
-        filter_dict(bus, fi.pdate_dataset_feat_names)
+        filter_dict(bus, fi.pdate_dataset_feat_names, copy=False)
 
     # return the final list of businesses
     return buses.values()
@@ -801,9 +801,9 @@ def write_objects(objects, fout, filt=None, attfilt=None):
                     # return to the parent loop
                     break
 
-        # filter the attributes
+        # filter the attributes and get a copy of the filtered object
         if (passed_filter and (attfilt is not None)):
-            filter_dict(obj, fi.pdate_dataset_feat_names)
+            obj = filter_dict(obj, fi.pdate_dataset_feat_names, copy=True)
 
         # add the object to the list if it passed the filter
         if (passed_filter):
@@ -813,9 +813,13 @@ def write_objects(objects, fout, filt=None, attfilt=None):
 # end write_objects
 
 '''
-Filter the keys in the dictionary.
+Filter the keys in the dictionary.  If copy is True then returns a copy of the
+original dictionary with the keys filtered.  Otherwise, the original is modified.
+By default, a copy is made.
 '''
-def filter_dict(d, attfilt):
+def filter_dict(d, attfilt, copy=True):
+    if (copy):
+        d = d.copy()
     for key in d.keys():
         if (key not in attfilt):
             d.pop(key, None)
