@@ -385,7 +385,7 @@ def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
         last_review_date = last_review_dates[bid]
         tract = census_tracts[bid]
         if (first_review_date is not None):
-            bus['first_review_date'] = date2int(last_review_date)
+            bus['first_review_date'] = date2int(first_review_date)
         if (last_review_date is not None):
             bus['last_review_date'] = date2int(last_review_date)
         if (tract is not None):
