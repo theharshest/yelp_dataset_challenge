@@ -26,7 +26,7 @@ census_tract = 'census_tract'
 restaurants = 'categories.Restaurants'
 
 # features included in datasets generated for specified prediction dates
-pdate_dataset_feat_names = [business_id, label, avg_star_rating, review_count, tip_count]
+pdate_dataset_feat_names = [label, avg_star_rating, review_count, tip_count]
 
 data_feat_info = dict([])
 data_feat_names = []
