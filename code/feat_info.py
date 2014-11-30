@@ -9,23 +9,33 @@ import csv
 data_feat_info = dict([])
 data_feat_names = []
 
-meta_feat_info = dict([
+bus_feat_info = dict([
     ('business_id',str),
-    ('name',str),
-    ('full_address',str),
-    ('city',str),
+#    ('name',str),
+#    ('full_address',str),
+#    ('city',str),
     ('state',str),
-    ('latitude',float),
-    ('longitude',float),
-    ('review_count',int),
-    ('open',int),
+#    ('latitude',float),
+#    ('longitude',float),
+#    ('review_count',int),
+#    ('open',int),
     ('first_review_date',int),
     ('last_review_date',int),
     ('census_tract',int)
 ])
-meta_feat_names = ['business_id','name','full_address','city','state',\
-                   'latitude','longitude','review_count','open',\
-                   'first_review_date','last_review_date','census_tract']
+
+bus_feat_names = ['business_id',
+#                   'name',
+#                   'full_address',
+#                   'city',
+                   'state',
+#                   'latitude',
+#                   'longitude',
+#                   'review_count',
+#                   'open',
+                   'first_review_date',
+                   'last_review_date',
+                   'census_tract']
 
 # filter used to filter business data
 restaurant_filter = {'categories.Restaurants':[True],
@@ -40,7 +50,7 @@ byob_values = [None,'no','yes_corkage','yes_free']
 smoking_values = [None,'no','outdoor','yes']
 wifi_values = [None,'no','paid','free']
 
-review_feat_names = ['review_id','business_id','user_id','date','stars']
+rev_feat_names = ['review_id','business_id','user_id','date','stars']
 tip_feat_names = ['business_id','user_id','date','likes']
 
 '''

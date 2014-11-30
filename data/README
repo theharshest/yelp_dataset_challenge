@@ -1,34 +1,54 @@
 The data directory contains four data files:
 
+  filtered-json.tar.gz - compressed tar file that contains the following files:
+    business.json - filtered version of yelp_academic_dataset_business.json
+    review.json - filtered version of yelp_academic_dataset_review.json
+    tip.json - filtered version of yelp_academic_dataset_tip.json
   data_feats.csv - contains the names of the data features
   restaurant_data.csv - contains numeric feature data for the restaurants
   meta_feats.csv - contains the names of the meta data features
-  restaurant_meta.csv - contains the meta data for the restaurants
-  review_data.csv - contains the review data
-  tip_data.csv - contains the tip data
 
-The data was filtered to include only restaurants located in Arizona, Nevada or Wisconsin.
-
-Each row in the restaurant_meta.csv file provides the meta data for the corresponding data row in the
-restaurant_data.csv file.  These two files contain column headers.
-
-Each row in the data_feats.csv file provides the name of the feature for the corresponding column in
-the restaurant_data.csv file.  Each row in the meta_feats.csv file provides the name of the feature
-for the corresponding column in the restaurant_meta.csv file.
+The filtered data files include the following content:
+  business.json:
+  - businesses include only restaurants located in Arizona, Nevada or Wisconsin
+  - attributes include the following:
+    - business_id
+    - state
+    - first_review_date (earliest date when a review or tip was submitted for the business)
+    - last_review_date (latest date when a review or tip was submitted for the business)
+    - census_tract (the ID of the census tract that includes the business)
+ review.json:
+  - reviews include only reviews for businesses included in business.json
+  - attributes include the following:
+    - review_id
+    - business_id
+    - user_id
+    - date
+    - stars
+  tip.json:
+  - tips include only tips for businesses included in business.json
+  - attributes incude the following:
+    - business_id
+    - user_id
+    - date
+    - likes
 
 Summary statistics for the data set (as of Nov 29, 2014):
 
-   13010 restaurants
-     410 restaurant data features
-      12 restaurant meta data features
-  694613 restaurant reviews
+   13010 businesses
+       5 business features
+  694613 reviews
        5 review features
+       ? tips
+       4 tip features
 
-To recreate the restaurant_data.csv, restaurant_meta.csv, review_data.csv and tip_data.csv files, do the following:
+To recreate the JSON data files, do the following:
 
   (assume that DATA references the data directory and CODE the code directory from the git repository)
 
-  $ python $CODE/createdatafiles.py $DATA/yelp_academic_dataset_business.json \
-           $DATA/yelp_academic_dataset_review.json $DATA/yelp_academic_dataset_tip.json
-	   $DATA/business_tracts.csv $DATA/data_feats.csv $DATA/restaurant_data.csv \
-	   $DATA/restaurant_meta.csv $DATA/review_data.csv $DATA/tip_data.csv
+  $ python $CODE/createdatafiles.py $DATA/yelp_academic_dataset_business.json $DATA/business.json $DATA/yelp_academic_dataset_review.json $DATA/review.json $DATA/yelp_academic_dataset_tip.json $DATA/tip.json $DATA/business_tracts.csv
+  $ tar cvzf $DATA/filtered-json.tar.gz $DATA/business.json $DATA/review.json $DATA/tip.json
+
+To extract the JSAON data files from the archive:
+
+  $ tar xvf $DATA/filtered-json.tar.gz
