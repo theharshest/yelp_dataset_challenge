@@ -109,6 +109,7 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     # filter businesses that were not open before pdate or closed before pdate
     # and set the class label for those that remain
     buses = {}
+    class_counts = [0, 0, 0, 0, 0]
     for bus in all_buses:
         open_date = bus['first_review_date']
         close_date = bus['last_review_date']
@@ -119,22 +120,28 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
             if ((close_date > pdate) and (close_date <= pdate_plus_3mos)):
                 # closed 0-3 months after pdate
                 bus['class'] = 0
+                class_counts[0] = class_counts[0] + 1
             elif ((close_date > pdate_plus_3mos) and (close_date <= pdate_plus_6mos)):
                 # closed 3-6 months after pdate
                 bus['class'] = 1
+                class_counts[1] = class_counts[1] + 1
             elif ((close_date > pdate_plus_6mos) and (close_date <= pdate_plus_9mos)):
                 # closed 6-9 months after pdate
                 bus['class'] = 2
+                class_counts[2] = class_counts[2] + 1
             elif ((close_date > pdate_plus_9mos) and (close_date <= pdate_plus_12mos)):
                 # closed 9-12 months after pdate
                 bus['class'] = 3
+                class_counts[3] = class_counts[3] + 1
             elif (close_date > pdate_plus_12mos):
                 # still open 12 months after pdate
                 bus['class'] = 4
+                class_counts[4] = class_counts[4] + 1
     # end for
 
-    # NEED TO FIX BUG - NO BUSINESSES ARE PASSING DATE FILTER ???
-    print 'number of buses that passed date filter: %d' % len(buses.values())
+    print 'number of businesses that passed date filter: %d' % len(buses.values())
+    for i in xrange(5):
+        print '  class %1d: %5d' % (i,class_counts[i])
 
     # filter reviews that do not pertain to one of the remaining businesses or
     # were not submitted before pdate
@@ -157,13 +164,14 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     # end for
 
     # calculate average star ranking
-    for bus in buses:
+    for bus in buses.values():
         # get review count and star total
-        rcount = bus['review_count']
-        stotal = bus['star_total']
+        rcount = bus.get('review_count',0)
+        stotal = bus.get('star_total',0)
 
         # calculate average star rating
-        bus['avg_star_rating'] = float(stotal)/float(rcount)
+        if (rcount > 0):
+            bus['avg_star_rating'] = float(stotal)/float(rcount)
 
     # filter tips that do not pertain to one of the remaining businesses or
     # were not submitted before pdate
@@ -186,6 +194,7 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     # add economic data
     # TBD
 
+    # return the final list of businesses
     return buses.values()
 
 # end gen_dataset
