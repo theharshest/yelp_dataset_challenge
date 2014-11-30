@@ -318,7 +318,7 @@ def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
     # collect the reviews that were written for one of the businesses in the list
     # of businesses add identify the first/last review/tip dates for each business
     reviews = []
-    print 'processing reviews...'
+    print 'processing reviews from %s...' % in_revjson
     with open(in_revjson, 'r') as fin:
         # there is one JSON object per line, iterate over the lines and load the JSON
         for line in fin:
@@ -349,7 +349,7 @@ def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
     # collect the tips that were written for one of the businesses in the list
     # of businesses add update the first/last review/tip dates for each business
     tips = []
-    print 'processing tips...'
+    print 'processing tips from %s...' % in_tipjson
     with open(in_tipjson, 'r') as fin:
         # there is one JSON object per line, iterate over the lines and load the JSON
         for line in fin:
