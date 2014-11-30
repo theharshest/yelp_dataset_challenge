@@ -28,13 +28,13 @@ import io
 
 '''
 Generate a data set that contains values that were available on the specified
-date.
+prediction date.
 
 Inputs:
 
-  pdate
-    the prediction date to use for generating the dataset (an int expressed as
-    seconds since the epoch)
+  pdatestr:
+    the prediction date to use for generating the dataset (a string formatted
+    as YYYY-MM-DD.
 
   busjson:
     the path to the file containing JSON business objects
@@ -44,8 +44,60 @@ Inputs:
 
   tipjson:
     the path to the file containing JSON tip objects
+
+  outfile:
+    the path to the file where the resulting dataset should be written
 '''
-def gen_dataset(pdate, busjson, revjson, tipjson):
+def gen_dataset_file(pdatestr, busjson, revjson, tipjson, outfile):
+    # load business objects
+    print 'Loading business objects from %s...' % busjson
+    all_buses, junk = load_objects(busjson)
+
+    # load review objects
+    print 'loading review objects from %s...' % revjson
+    all_reviews, junk = load_objects(revjson)
+
+    # load tip objects
+    print 'loading tip objects from %s...' % tipjson
+    all_tips, junk = load_objects(tipjson)
+
+    # convert prediction date to int (seconds since epoch)
+    pdate = date2int(str2date(pdatestr))
+
+    print 'generating dataset for prediction date %s (%d)...' % (pdatestr,pdate)
+    buses = gen_dataset(pdate, all_buses, all_reviews, all_tips)
+
+    print 'writing %d JSON objects to %s...' % (len(buses),outfile)
+    feats = ['business_id', 'class', 'avg_star_rating', 'review_count', 'tip_count']
+    save_objects(buses, outfile, attfilt=feats)
+# end gen_dataset_file
+
+'''
+Generate a data set that contains values that were available on the specified
+prediction date.
+
+Inputs:
+
+  pdate:
+    the prediction date to use for generating the dataset (an int expressed as
+    seconds since the epoch)
+
+  all_buses:
+    all the JSON business objects to consider for the dataset
+
+  all_reviews:
+    all the JSON review objects to consider for the dataset
+
+  all_tips:
+    all the JSON tip objects to consider for the dataset
+
+Outputs:
+
+  buses:
+    the JSON business objects selected for the dataset augmented with review
+    and tip data (and eventually with census and economic data)
+'''
+def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     # calculate duration of time periods in seconds
     # - 30 days x 24 hrs/day x 60 min/hr x 60 sec/min
     month = 30*24*60*60
@@ -54,47 +106,42 @@ def gen_dataset(pdate, busjson, revjson, tipjson):
     pdate_plus_9mos  =  pdate+9*month
     pdate_plus_12mos = pdate+12*month
 
-    # load business objects
-    print 'Loading business objects from %s...' % busjson
-    all_objects, all_columns = load_objects(busjson)
-
     # filter businesses that were not open before pdate or closed before pdate
     # and set the class label for those that remain
-    objects = {}
-    for obj in all_objects:
-        open_date = obj['first_review_date']
-        close_date = obj['last_review_date']
+    buses = {}
+    for bus in all_buses:
+        open_date = bus['first_review_date']
+        close_date = bus['last_review_date']
         if ((open_date <= pdate) and (close_date > pdate)):
             # business meets the criteria - add to dictionary
-            objects[obj['business_id']]=obj
+            buses[bus['business_id']]=bus
             # set class label for business
             if ((close_date > pdate) and (close_date <= pdate_plus_3mos)):
                 # closed 0-3 months after pdate
-                obj['class'] = 0
+                bus['class'] = 0
             elif ((close_date > pdate_plus_3mos) and (close_date <= pdate_plus_6mos)):
                 # closed 3-6 months after pdate
-                obj['class'] = 1
+                bus['class'] = 1
             elif ((close_date > pdate_plus_6mos) and (close_date <= pdate_plus_9mos)):
                 # closed 6-9 months after pdate
-                obj['class'] = 2
+                bus['class'] = 2
             elif ((close_date > pdate_plus_9mos) and (close_date <= pdate_plus_12mos)):
                 # closed 9-12 months after pdate
-                obj['class'] = 3
+                bus['class'] = 3
             elif (close_date > pdate_plus_12mos):
                 # still open 12 months after pdate
-                obj['class'] = 4
+                bus['class'] = 4
     # end for
 
-    # load review objects
-    print 'loading review objects from %s...' % revjson
-    all_reviews = load_objects(revjson)
+    # NEED TO FIX BUG - NO BUSINESSES ARE PASSING DATE FILTER ???
+    print 'number of buses that passed date filter: %d' % len(buses.values())
 
     # filter reviews that do not pertain to one of the remaining businesses or
     # were not submitted before pdate
     for review in all_reviews:
         # look for the reviewed business
         bid = review['business_id']
-        obj = objects.get(bid, None)
+        obj = buses.get(bid, None)
 
         # update review_count, star_count and star_total for the business
         if (obj is not None):
@@ -103,25 +150,27 @@ def gen_dataset(pdate, busjson, revjson, tipjson):
                 # update review count
                 rcount = obj.get('review_count',0)
                 obj['review_cont'] = rcount + 1
-                # update star count
-                scount = obj.get('star_count',0)
-                obj['star_count'] = scount + 1
                 # update star total
                 stars = review['stars']
                 stotal = obj.get('star_total',0)
                 obj['star_total'] = stotal + stars
     # end for
 
-    # load tip objects
-    print 'loading tip objects from %s...' % tipjson
-    all_tips = load_objects(tipjson)
+    # calculate average star ranking
+    for bus in buses:
+        # get review count and star total
+        rcount = bus['review_count']
+        stotal = bus['star_total']
+
+        # calculate average star rating
+        bus['avg_star_rating'] = float(stotal)/float(rcount)
 
     # filter tips that do not pertain to one of the remaining businesses or
     # were not submitted before pdate
     for tip in all_tips:
         # look for the reviewed business
         bid = tip['business_id']
-        obj = objects.get(bid, None)
+        obj = buses.get(bid, None)
 
         # increment tip cunt for the business
         if (obj is not None):
@@ -136,6 +185,8 @@ def gen_dataset(pdate, busjson, revjson, tipjson):
 
     # add economic data
     # TBD
+
+    return buses.values()
 
 # end gen_dataset
 '''
@@ -442,7 +493,7 @@ Outputs:
   objects:
     list of JSON objects, the JSON objects are python dictionaries
 
-  columns:
+  attributes:
     list of keys that can be used to access JSON object attributes
 '''
 def load_objects(file_path, filt=None):
