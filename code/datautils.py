@@ -725,7 +725,7 @@ def write_objects(objects, fout, filt=None, attfilt=None):
         # add the object to the list if it passed the filter
         if (passed_filter):
             # write the object to the file
-            fout.write(unicode(json.dumps(obj,ensure_ascii=False)))
+            fout.write(unicode(json.dumps(obj,ensure_ascii=False))+'\n')
     # end for
 # end write_objects
 
