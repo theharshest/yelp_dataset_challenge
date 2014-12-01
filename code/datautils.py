@@ -14,6 +14,11 @@ import time
 import jsonutils
 import csvutils
 
+# initialize time constants assuming 30 day months
+# - 30 days x 24 hrs/day x 60 min/hr x 60 sec/min
+month = 30*24*60*60
+year = 12*month
+
 '''
 Generate data sets that contain values that were available on the specified
 prediction dates.  Each generated dataset will be written to the file:
@@ -96,9 +101,6 @@ Outputs:
     of the original JSON objects so that the objects in all_buses are not modified
 '''
 def gen_dataset(pdate, all_buses, all_reviews, all_tips):
-    # calculate duration of time periods in seconds
-    # - 30 days x 24 hrs/day x 60 min/hr x 60 sec/min
-    month = 30*24*60*60
     pdate_plus_3mos  =  pdate+3*month
     pdate_plus_6mos  =  pdate+6*month
     pdate_plus_9mos  =  pdate+9*month
@@ -205,7 +207,7 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
             bus[fi.avg_star_rating] = float(stotal)/float(rcount)
 
         # filter out unneeded attributes
-        jsonutils.filter_dict(bus, fi.pdate_dataset_feat_names, copy=False)
+        jsonutils.filter_dict(bus, fi.data_feat_names, copy=False)
 
     # return the final list of businesses
     return buses.values()
@@ -445,5 +447,11 @@ def load_restaurants(file_path):
 def str2date(datestr):
     return time.strptime(datestr, '%Y-%m-%d')
 
+def date2str(date):
+    return time.strftime('%Y-%m-%d', date)
+
 def date2int(d):
     return int(time.mktime(d))
+
+def int2date(secs):
+    return time.localtime(secs)

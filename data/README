@@ -33,13 +33,13 @@ The filtered data files include the following content:
     - date
     - likes
 
-Summary statistics for the data set (as of Nov 29, 2014):
+Summary statistics for the data set (as of Nov 30, 2014):
 
    13010 businesses
        5 business features
   694613 reviews
        5 review features
-       ? tips
+  243571 tips
        4 tip features
 
 To recreate the JSON data files, do the following:
