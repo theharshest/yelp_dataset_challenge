@@ -1,89 +1,300 @@
 # -*- coding: utf-8 -*-
 """
-This modules provides utility functions for working with the yelp academic
+This modules provides utility functions for working with the Yelp! academic
 dataset data files.
 
 Created on Wed Oct 29 18:31:04 2014
 
-@author John Maloney (jmmaloney3@gmail.com)
-
-Note: Some of the code in this module is based on code originally developed by
-Scott Clark (scott@scottclark.io) and licensed under the Apache License,
-Version 2.0:
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-The original source can be found here:
-
-    https://github.com/Yelp/dataset-examples/blob/master/json_to_csv_converter.py
-
-This modified version is based on the original version submitted on Oct 16, 2014.
+@author John Maloney
 """
 
-import numpy as np
 import json
-import csv
-import feat_info
+import feat_info as fi
 import time
+import jsonutils
+import csvutils
+
+# initialize time constants assuming 30 day months
+# - 30 days x 24 hrs/day x 60 min/hr x 60 sec/min
+month = 30*24*60*60
+year = 12*month
 
 '''
-Load data for restaurants, convert the data features into numeric data and then
-save the data features and meta data to the specified files.
+Generate data sets that contain values that were available on the specified
+prediction dates.  Each generated dataset will be written to the file:
+
+   <outdir>/<pdate>.json
 
 Inputs:
 
-  json_bus_path:
+  pdates:
+    a list of prediction dates to use for generating the datasets (each date is
+    a string formatted as YYYY-MM-DD)
+
+  busjson:
+    the path to the file containing all the JSON business objects
+
+  revjson:
+    the path to the file containing all the JSON review objects
+
+  tipjson:
+    the path to the file containing all the JSON tip objects
+
+  outdir:
+    the path to the directory where the resulting datasets should be written
+'''
+def gen_dataset_files(pdates, busjson, revjson, tipjson, outdir):
+    # load business objects
+    print 'Loading business objects from %s...' % busjson
+    all_buses, junk = jsonutils.load_objects(busjson)
+
+    # load review objects
+    print 'loading review objects from %s...' % revjson
+    all_reviews, junk = jsonutils.load_objects(revjson)
+
+    # load tip objects
+    print 'loading tip objects from %s...' % tipjson
+    all_tips, junk = jsonutils.load_objects(tipjson)
+
+    # generate the datsets
+    for pdatestr in pdates:
+        # convert prediction date to int (seconds since epoch)
+        pdate = date2int(str2date(pdatestr))
+
+        # generate the dataset for the specified prediction date
+        print 'generating dataset for prediction date %s (%d)...' % (pdatestr,pdate)
+        buses = gen_dataset(pdate, all_buses, all_reviews, all_tips)
+
+        # generate filename for dataset
+        outfile = outdir + '/' + pdatestr + '.json'
+
+        # write dataset to file
+        print 'writing %d JSON objects to %s...' % (len(buses),outfile)
+        jsonutils.save_objects(buses, outfile)
+    # end for
+# end gen_dataset_file
+
+'''
+Generate a data set that contains values that were available on the specified
+prediction date.
+
+Inputs:
+
+  pdate:
+    the prediction date to use for generating the dataset (an int expressed as
+    seconds since the epoch)
+
+  all_buses:
+    all the JSON business objects to consider for the dataset
+
+  all_reviews:
+    all the JSON review objects to consider for the dataset
+
+  all_tips:
+    all the JSON tip objects to consider for the dataset
+
+Outputs:
+
+  buses:
+    the JSON business objects selected for the dataset augmented with review
+    and tip data (and eventually with census and economic data), a copy is made
+    of the original JSON objects so that the objects in all_buses are not modified
+'''
+def gen_dataset(pdate, all_buses, all_reviews, all_tips):
+    pdate_plus_3mos  =  pdate+3*month
+    pdate_plus_6mos  =  pdate+6*month
+    pdate_plus_9mos  =  pdate+9*month
+    pdate_plus_12mos = pdate+12*month
+
+    # filter businesses that were not open before pdate or closed before pdate
+    # and set the class label for those that remain
+    buses = {}
+    class_counts = [0, 0, 0, 0, 0]
+    for orig_bus in all_buses:
+        open_date = orig_bus.get(fi.first_review_date,None)
+        close_date = orig_bus.get(fi.last_review_date,None)
+        if ((open_date is not None) and (open_date <= pdate) and
+            (close_date is not None) and (close_date > pdate)):
+            # business meets the criteria - add a copy to dictionary
+            bus = orig_bus.copy()
+            buses[bus[fi.business_id]]=bus
+            # set class label for business
+            if ((close_date > pdate) and (close_date <= pdate_plus_3mos)):
+                # closed 0-3 months after pdate
+                bus[fi.label] = 0
+                class_counts[0] = class_counts[0] + 1
+            elif ((close_date > pdate_plus_3mos) and (close_date <= pdate_plus_6mos)):
+                # closed 3-6 months after pdate
+                bus[fi.label] = 1
+                class_counts[1] = class_counts[1] + 1
+            elif ((close_date > pdate_plus_6mos) and (close_date <= pdate_plus_9mos)):
+                # closed 6-9 months after pdate
+                bus[fi.label] = 2
+                class_counts[2] = class_counts[2] + 1
+            elif ((close_date > pdate_plus_9mos) and (close_date <= pdate_plus_12mos)):
+                # closed 9-12 months after pdate
+                bus[fi.label] = 3
+                class_counts[3] = class_counts[3] + 1
+            elif (close_date > pdate_plus_12mos):
+                # still open 12 months after pdate
+                bus[fi.label] = 4
+                class_counts[4] = class_counts[4] + 1
+    # end for
+
+    print '  number of businesses that passed date filter: %d' % len(buses.values())
+    for i in xrange(5):
+        print '    class %1d: %5d' % (i,class_counts[i])
+
+    # filter reviews that do not pertain to one of the remaining businesses or
+    # were not submitted before pdate
+    all_rev_count = 0
+    for review in all_reviews:
+        # look for the reviewed business
+        bid = review[fi.business_id]
+        obj = buses.get(bid, None)
+
+        # update review_count, star_count and star_total for the business
+        if (obj is not None):
+            rdate = review[fi.date]
+            if (rdate <= pdate):
+                # update review count
+                rcount = obj.get(fi.review_count,0)
+                obj[fi.review_count] = rcount + 1
+                # update star total
+                stars = review.get(fi.stars,0)
+                stotal = obj.get(fi.star_total,0)
+                obj[fi.star_total] = stotal + stars
+
+                all_rev_count = all_rev_count + 1
+    # end for
+
+    print '  number of reviews that passed filter: %d' % all_rev_count
+
+    # filter tips that do not pertain to one of the remaining businesses or
+    # were not submitted before pdate
+    all_tip_count = 0
+    for tip in all_tips:
+        # look for the reviewed business
+        bid = tip[fi.business_id]
+        obj = buses.get(bid, None)
+
+        # increment tip cunt for the business
+        if (obj is not None):
+            tdate = tip[fi.date]
+            if (tdate <= pdate):
+                tcount = obj.get(fi.tip_count,0)
+                obj[fi.tip_count] = tcount + 1
+
+                all_tip_count = all_tip_count + 1
+    # end for
+
+    print '  number of tips that passed filter: %d' % all_tip_count
+
+    # add census data
+    # TBD
+
+    # add economic data
+    # TBD
+
+    # calculate average star ranking and remove unneeded attributes
+    for bus in buses.values():
+        # get review count and star total
+        rcount = bus.get(fi.review_count,0)
+        stotal = bus.get(fi.star_total,0)
+
+        # calculate average star rating
+        if (rcount > 0):
+            bus[fi.avg_star_rating] = float(stotal)/float(rcount)
+
+        # filter out unneeded attributes
+        jsonutils.filter_dict(bus, fi.data_feat_names, copy=False)
+
+    # return the final list of businesses
+    return buses.values()
+
+# end gen_dataset
+'''
+Filter the data from the Yelp! academic dataset so that it contains only objects
+and attributes that are of interest.
+
+Inputs:
+
+  in_busjson:
     the path to the file containing JSON business objects
 
-  json_review_path
+  out_busjson:
+    the path to the file where the filtered JSON business objects will be written
+
+  in_revjson:
     the path to the file containing JSON review objects
-  
-  csv_tract_path
+
+  out_revjson:
+    the path to the file where the filtered JSON review objects will be written
+
+  in_tipjson:
+    the path to the file containing JSON tip objects
+
+  out_tipjson
+    the path to the file where the filtered JSON tip objects will be written
+
+  in_censuscsv
     the path to the CSV file containing cencus tracts for businesses
 
-  feat_file_path:
-    the path to the file where the csv feature data will be written
-
-  meta_file_path:
-    the path to the file where the csv meta data will be written
 '''
-def convert_restaurant_json_to_csv(json_bus_path, json_review_path, csv_tract_path, feat_file_path, meta_file_path):
+def filter_yelp_data(in_busjson, out_busjson, in_revjson, out_revjson,
+                     in_tipjson, out_tipjson, in_censuscsv):
     # initialize the column names
-    feat_columns = feat_info.data_feat_names
-    meta_columns = feat_info.meta_feat_names
+    #feat_columns = feat_info.data_feat_names
+    bus_feats = fi.bus_feat_names
+    rev_feats = fi.rev_feat_names
+    tip_feats = fi.tip_feat_names
     
     # make sure the data features have been initialized
-    if (len(feat_columns)==0):
-        print('\nWARNING: data features have not been initialized\n')
+    #if (len(feat_columns)==0):
+    #    print('\nWARNING: data features have not been initialized\n')
     
     # load the restaurant objects
-    print 'loading %s...' % json_bus_path
-    objects,junk = load_restaurants(json_bus_path)
+    print 'loading business JSON objects from %s...' % in_busjson
+    objects,junk = load_restaurants(in_busjson)
 
-    # add last review date and census tract to objects
-    objects = add_review_census_data(json_review_path, csv_tract_path, objects)
+    # load the review and tip objects and add first/last review/tip date
+    # and census tract to objects
+    objects,reviews,tips = process_review_tip_census_data(in_revjson, in_tipjson,
+                                                          in_censuscsv, objects)
     
     # create feature matrix
-    feat_mat = get_feature_matrix(objects, feat_columns)
+    #feat_mat, columns = get_feature_matrix(objects, feat_columns)
     
     # write the 2D feature array to file
-    print 'writing data features to %s...' % feat_file_path
-    write_feature_matrix_csv(feat_file_path, feat_mat, feat_columns)
+    #print 'writing data features to %s...' % out_buscsv
+    #write_feature_matrix_csv(out_buscsv, feat_mat, feat_columns)
     
     # write meta data to file
-    print 'writing meta features to %s...' % meta_file_path
-    write_objects_csv(meta_file_path, objects, meta_columns)
+    print 'writing business JSON object to %s...' % out_busjson
+    jsonutils.save_objects(objects, out_busjson, attfilt=bus_feats)
+
+    # write review data to file
+    print 'writing review JSON objects to %s...' % out_revjson
+    jsonutils.save_objects(reviews, out_revjson, attfilt=rev_feats)
+
+    # write tip data to file
+    print 'writing tip JSON objects to %s...' % out_tipjson
+    jsonutils.save_objects(tips, out_tipjson, attfilt=tip_feats)
 
 '''
-Add the last review dates and census tract for each business in the specified
-list of business objects.
+Collect the reviews and tips for the businesses in the specified list of
+business objects.  Also, add the first and last review/tip dates and census
+tract for each business in the specified list of business objects.
 
 Inputs:
 
-  json_review_path
+  in_revjson:
     the path to the file containing JSON review objects
 
-  csv_tract_path
+  in_tipjson:
+    the path to the file containing JSON tip objects
+
+  in_censuscsv:
     the path to the CSV file containing cencus tracts for businesses
 
   buses
@@ -94,20 +305,29 @@ Outputs:
   buses
     the list of business objects with each business object augmented with its
     last review date and census tract
+
+  reviews
+    the list of reviews that were written for one of the businesses identified
+    in the list of businesses passed as input
+
+  tips
+    the list of tips that were written for one of the businesses identified
+    in the list of businesses passed as input
 '''
-def add_review_census_data(json_review_path, csv_tract_path, buses):
-    # load the reviews
-    # - the reviews don't indicate the usiness type - so have to load them all
-    print 'loading %s...' % csv_tract_path
-    census_data = read_feature_matrix_csv(csv_tract_path,False)
+def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
+    # load the census tracts
+    print 'loading census tracts from %s...' % in_censuscsv
+    census_data = csvutils.load_matrix(in_censuscsv,False)
 
     # initialize  dictionaries to hold the last review dates and census tract
     print 'initialize dictionaries...'
+    first_review_dates = {}
     last_review_dates = {}
     census_tracts = {}
     for bus in buses:
-        bid = bus['business_id']
+        bid = bus[fi.business_id]
         # add the business IDs for restaurants to the dictionaries
+        first_review_dates[bid] = None
         last_review_dates[bid] = None
         census_tracts[bid] = None
 
@@ -120,93 +340,84 @@ def add_review_census_data(json_review_path, csv_tract_path, buses):
         if (tract): # is tract is not the empty string
             census_tracts[bid] = tract
 
-    # add the last review dates to the dictionary
-    print 'processing reviews...'
-    with open(json_review_path, 'r') as fin:
-        # there is one JSON file per line, iterate over the lines and load the JSON
+    # collect the reviews that were written for one of the businesses in the list
+    # of businesses add identify the first/last review/tip dates for each business
+    reviews = []
+    print 'processing reviews from %s...' % in_revjson
+    with open(in_revjson, 'r') as fin:
+        # there is one JSON object per line, iterate over the lines and load the JSON
         for line in fin:
             # load the JSON object as a dictionary
             review = json.loads(line)
 
             # if the review is for one of the requested businesses then update
-            # the current last review date for that business if necessary
-            bid = review['business_id']
+            # the current first/last review/tip date for that business if necessary
+            bid = review[fi.business_id]
             if (bid in last_review_dates):
-                review_date = str2date(review['date'])
+                # append this review to the list of reviews
+                reviews.append(review)
+                # process review dates
+                review_date = str2date(review[fi.date])
+                review[fi.date] = date2int(review_date)
+                # process first and last review/tip dates
+                current_first = first_review_dates[bid]
                 current_last = last_review_dates[bid]
-                # if this review date is more recent then the current last review
-                # date then set the last review date to this review date
+                # if this review date is earlier than the current first review/tip
+                # date then set the first review/tip date to this review date
+                if (current_first is None or current_first > review_date):
+                    first_review_dates[bid] = review_date
+                # if this review date is more recent than the current last review/tip
+                # date then set the last review/tip date to this review date
                 if (current_last is None or current_last < review_date):
                     last_review_dates[bid] = review_date
 
+    # collect the tips that were written for one of the businesses in the list
+    # of businesses add update the first/last review/tip dates for each business
+    tips = []
+    print 'processing tips from %s...' % in_tipjson
+    with open(in_tipjson, 'r') as fin:
+        # there is one JSON object per line, iterate over the lines and load the JSON
+        for line in fin:
+            # load the JSON object as a dictionary
+            tip = json.loads(line)
+
+            # if the tip is for one of the requested businesses then update
+            # the current first/last review/tip date for that business if necessary
+            bid = tip[fi.business_id]
+            if (bid in last_review_dates):
+                # append this tip to the list of tips
+                tips.append(tip)
+                # process tip dates
+                tip_date = str2date(tip[fi.date])
+                tip[fi.date] = date2int(tip_date)
+                # process first and last review/tip dates
+                current_first = first_review_dates[bid]
+                current_last = last_review_dates[bid]
+                # if this tip date is earlier than the current first review/tip
+                # date then set the first review/tip date to this review date
+                if (current_first is None or current_first > tip_date):
+                    first_review_dates[bid] = tip_date
+                # if this tip date is more recent than the current last review/tip
+                # date then set the last review/tip date to this review date
+                if (current_last is None or current_last < tip_date):
+                    last_review_dates[bid] = tip_date
+
     # copy the last review dates and census tracts into the business objects
-    print 'adding last review data and census tract to business objects...'
+    print 'adding first/last review date and census tract to business objects...'
     for bus in buses:
-        bid = bus['business_id']
-        review_date = last_review_dates[bid]
+        bid = bus[fi.business_id]
+        first_review_date = first_review_dates[bid]
+        last_review_date = last_review_dates[bid]
         tract = census_tracts[bid]
-        if (review_date is not None):
-            bus['last_review_date'] = date2int(review_date)
+        if (first_review_date is not None):
+            bus[fi.first_review_date] = date2int(first_review_date)
+        if (last_review_date is not None):
+            bus[fi.last_review_date] = date2int(last_review_date)
         if (tract is not None):
-            bus['census_tract'] = tract
+            bus[fi.census_tract] = tract
 
-    # return the augmented business objects
-    return buses
-
-# ==================================================
-# Functions to load feature matrices from JSON files
-# ==================================================
-'''
-Load a restaurant feature matrix from the specified JSON file path.
-
-Inputs:
-
-  file_path:
-    the path the file containing JSON objects
-  
-  columns: (optional)
-    the columns to include in the feature matrix, by default all columns
-    in the ``feat_info.data_feat_names`` are included
-
-Outputs:
-
-  features:
-    a 2D numpy float array containing one line for each object and one
-    column for each feature
-'''
-def load_restaurant_feature_matrix(file_path,columns=feat_info.data_feat_names):
-    return load_feature_matrix(file_path, columns=columns,
-                               filt=feat_info.restaurant_filter)
-
-'''
-Load a feature matrix from the specified JSON file path.
-
-Inputs:
-
-  file_path:
-    the path the file containing JSON objects
-
-  columns: (optional)
-    the columns to include in the feature matrix, by default all columns
-    in the ``data_feat_names`` are included
-
-  filter_key: (optional)
-    a key in the JSON file that will be used for filtering
-
-  filter_val: (optional)
-    the value to use for filtering, only objects where
-    ``obj[filter_key] == filter_val`` will be returned
-
-Outputs:
-
-  features:
-    a 2D numpy float array containing one line for each object and one
-    column for each feature
-'''
-def load_feature_matrix(file_path,columns=feat_info.data_feat_names,filt=None):
-    with open(file_path, 'r') as fin:
-        # load the feature matrix from the JSON file
-        return read_feature_matrix(fin,columns,filt)
+    # return the augmented business objects, list of reviews and list of tips
+    return buses, reviews, tips
 
 # ==================================================
 # Functions to load JSON objects from JSON files
@@ -228,340 +439,7 @@ Outputs:
     list of keys that can be used to access JSON object attributes
 '''
 def load_restaurants(file_path):
-    return load_objects(file_path, filt=feat_info.restaurant_filter)
-
-'''
-Load objects from the specified JSON file path and flatten the attributes into
-a single level dictionary.
-
-Inputs:
-
-  file_path:
-    the path the file containing JSON objects
-
-  filt: (optional)
-    dictionary containing the criteria that will be used to filter the
-    objects that are loaded, each dictonary key is the name of a JSON
-    attributes and each value is a list of possible values for that attribute,
-    for each key-value pair the following condition is evaluated: obj[key] in value,
-    each key-value pair defines criteria that are ORed together while the
-    key-value pair conditons are ANDed together
-
-Outputs:
-
-  objects:
-    list of JSON objects, the JSON objects are python dictionaries
-
-  columns:
-    list of keys that can be used to access JSON object attributes
-'''
-def load_objects(file_path, filt=None):
-    with open(file_path, 'r') as fin:
-        return read_objects(fin, filt)
-
-# ====================================================
-# Functions to read feature matrices from file objects
-# ====================================================
-'''
-Read a feature matrix from the specified file object containing JSON objects.
-
-Inputs:
-
-  file_path:
-    the path the file containing JSON objects
-
-  columns: (optional)
-    the columns to include in the feature matrix, by default all columns
-    in the ``data_feat_names`` are included
-
-  filt: (optional)
-    dictionary containing the criteria that will be used to filter the
-    objects that are loaded, each dictonary key is the name of a JSON
-    attributes and each value is a list of possible values for that attribute,
-    for each key-value pair the following condition is evaluated: obj[key] in value,
-    each key-value pair defines criteria that are ORed together while the
-    key-value pair conditons are ANDed together
-
-Outputs:
-
-  features:
-    a 2D numpy float array containing one line for each object and one
-    column for each feature
-'''
-def read_feature_matrix(fin,columns=feat_info.data_feat_names,filt=None):
-    # load the objects from the JSON file
-    objects,junk = read_objects(fin, filt)
-
-    # return features
-    return get_feature_matrix(objects,columns)    
-
-'''
-Convert the specified list of JSON objects into a feature matrix.
-
-Inputs:
-
-  objects:
-    the list of JSON objects (python dictionaries), one row will be added to
-    feature matrix for each object
-    
-  columns: (optional)
-    the columns to include in the feature matrix, by default all columns
-    in ``feat_info.data_feat_names`` are included
-
-Outputs:
-
-  features:
-    a 2D numpy float array containing one line for each object and one
-    column for each feature
-'''
-def get_feature_matrix(objects, columns=feat_info.data_feat_names):
-    # get the number of restaurants
-    N = len(objects)
-    
-    # get the dimension
-    D = len(columns)
-    
-    # add features to numpy array
-    features = np.zeros((N,D),dtype=float)
-    for obj,i in zip(objects, xrange(N)):
-        for j in xrange(D):
-            key = columns[j]
-            dtype = feat_info.data_feat_info[key] \
-                    if (key in feat_info.data_feat_info) else None
-            features[i,j] = get_value(obj, key, dtype)
-
-    # return the result as a 2D numpy array
-    return features
-
-'''
-Read the value for the specified key and convert it to the specified data type.
-
-Input:
-
-  obj:
-    a python dictionary representing a JSON object
-  
-  key:
-    the key to use to access the value
-
-  dtype:
-    the data type to return, the valeu will be converted to this type
-'''
-def get_value(obj, key, dtype):
-    val = obj[key] if (key in obj) else None
-    if (dtype == bool):
-        return bool(val)
-    elif (dtype == float):
-        if (val is None):
-            return float('nan')
-        else:
-            return float(val)
-    elif (dtype == int):
-        if (val is None):
-            return float('nan')
-        else:
-            return int(val)
-    elif (type(dtype) == list):
-        # the first value in the list is always None
-        # if None is selected set the value to -1
-        # so subtract 1 from the index that is returned
-        return dtype.index(val)-1
-    else:
-        print 'unsupported type: %s' % dtype
-        return float('nan')
-
-# ==================================================
-# Functions to read JSON objects from file objects
-# ==================================================
-'''
-Read JSON objects from the specified file object and flatten the attributes
-into a single level dictionary.
-
-Inputs:
-
-  fin:
-    a file object from which JSON objects can be loaded
-
-  filt: (optional)
-    dictionary containing the criteria that will be used to filter the
-    objects that are loaded, each dictonary key is the name of a JSON
-    attributes and each value is a list of possible values for that attribute,
-    for each key-value pair the following condition is evaluated: obj[key] in value,
-    each key-value pair defines criteria that are ORed together while the
-    key-value pair conditons are ANDed together
-
-Outputs:
-
-  objects:
-    list of JSON objects, the JSON objects are python dictionaries
-
-  columns:
-    list of keys that can be used to access JSON object attributes
-'''
-def read_objects(fin, filt=None):
-    # the list of objects to be populated
-    objects = []
-    # the list of columns to be populated
-    columns = set()
-    # there is one JSON file per line, iterate over the lines and load the JSON
-    for line in fin:
-        # load the JSON object as a dictionary
-        line_contents = json.loads(line)
-        # create a new dictionary to hold the flattened values
-        obj = {}
-        # flatten the values from the line_contents dictionary
-        obj = flatten_dict(line_contents, obj)
-        
-        # set flag used to control whether this object is added
-        passed_filter = True
-
-        # apply the filter if appropriate
-        if (filt is not None):
-            # check the filter conditions
-            for k,v in filt.iteritems():
-                if ((k not in obj) or (obj[k] not in v)):
-                    # this object doesn't pass the filter
-                    passed_filter=False
-                    # return to the parent loop
-                    break
-
-        # add the object to the list if it passed the filter
-        if (passed_filter):
-            # add the new object to the list
-            objects.append(obj)
-            # update the list of columns names
-            columns.update(set(obj.keys()))
-
-    return objects, columns
-# end load_json
-
-'''
-Flatten the keys in d and add them to obj.
-'''
-def flatten_dict(d, obj, parent_key=None):
-    # iterate over the keys and values
-    for child_key,val in d.iteritems():
-        key = "{0}.{1}".format(parent_key, child_key) if parent_key else child_key
-        if (type(val) == dict):
-            obj = flatten_dict(val, obj, key)
-        elif ((type(val) == list) or (type(val) == tuple)):
-            # iterate over the items in the list and add a boolean attribute for each
-            for item in val:
-                item_key = "{0}.{1}".format(key, item) if key else item
-                obj[item_key] = True
-        else:
-            # add the key,value pair to the dictionary
-            obj[key] = val
-
-    # return the updated obj and column list
-    return obj
-
-# ==================================================
-# Functions to read/write feature matrix as csv data
-# ==================================================
-'''
-Write the specified feature matrix to a CSV file.
-
-Inputs:
-
-  file_path:
-    the path the file where the feature matrix should be written
-
-  features:
-    a 2D numpy float array containing one line for each object and one
-    column for each feature
-
-  columns:
-    names of the attributes that are included in the feature matrix, all the
-    columns in the feature matrix will be written to file regardless of the 
-    names in this list, if the list is None then the attribute names are not
-    written to file
-'''
-def write_feature_matrix_csv(file_path, features, columns=None):
-    with open(file_path, 'wb+') as fout:
-        csv_file = csv.writer(fout)
-        # write column headers
-        if (columns is not None):
-            csv_file.writerow(list(columns))
-        # get number of samples
-        N = features.shape[0]
-        # write each row to file
-        for i in xrange(N):
-            csv_file.writerow(features[i,:])
-
-'''
-Read data from the specified CSV file into a feature matrix.
-
-Inputs:
-
-  file_path:
-    the path to the file holding the data to be loaded
-
-  has_hdr: (optional)
-    indicates whether or not the file contains headers, by default this is True
-
-Outputs:
-
-  features:
-    a 2D numpy array containing one line for each object and one
-    column for each feature
-'''
-def read_feature_matrix_csv(file_path, has_hdr=True):
-    with open(file_path, 'rbU') as fin:
-        csv_file = csv.reader(fin)
-
-        if (has_hdr):
-            # skip column headers
-            csv_file.next()
-
-        # read the sample data
-        data = []
-        for row in csv_file:
-            data.append(row)
-
-        # convert the list to an numpy 2D array and return
-        return np.array(data)
-
-# ==================================================
-# Functions to write objects to file as csv data
-# ==================================================
-'''
-Write the specified features to a CSV file.
-
-Inputs:
-
-  file_path:
-    the path the file containing JSON objects
-
-  objects:
-    list of JSON objects, the JSON objects are python dictionaries
-
-  columns:
-    list of keys for attributes to be written to the file
-'''
-def write_objects_csv(file_path, objects, columns=feat_info.data_feat_names):
-    with open(file_path, 'wb+') as fout:
-        csv_file = csv.writer(fout)
-        # write column headers
-        csv_file.writerow(list(columns))
-        # write the selected features for each object
-        for obj in objects:
-            csv_file.writerow(get_row(obj, columns))
-
-'''
-Return a csv compatible row containing values for the specified columns.
-'''
-def get_row(obj, columns=feat_info.data_feat_names):
-    row = []
-    for key in columns:
-        val = obj[key] if (key in obj) else None
-        if isinstance(val, unicode):
-            row.append('{0}'.format(val.encode('utf-8')))
-        elif val is not None:
-            row.append('{0}'.format(val))
-        else:
-            row.append('')
-    return row
+    return jsonutils.load_objects(file_path, filt=fi.restaurant_filter)
 
 # ==================================================
 # Functions to convert data
@@ -569,5 +447,11 @@ def get_row(obj, columns=feat_info.data_feat_names):
 def str2date(datestr):
     return time.strptime(datestr, '%Y-%m-%d')
 
+def date2str(date):
+    return time.strftime('%Y-%m-%d', date)
+
 def date2int(d):
     return int(time.mktime(d))
+
+def int2date(secs):
+    return time.localtime(secs)
