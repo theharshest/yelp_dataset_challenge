@@ -24,27 +24,37 @@ star_total = 'star_total'
 state = 'state'
 census_tract = 'census_tract'
 restaurants = 'categories.Restaurants'
+name = 'name'
+full_address = 'full_address'
+city = 'city'
+latitude = 'latitude'
+longitude = 'longitude'
+open_attr = 'open'
 
 # features included in datasets generated for specified prediction dates
 pdate_dataset_feat_names = [label, avg_star_rating, review_count, tip_count]
+# feat_info: key - attribute name, value - tuple with first entry providing the
+#     type of the attribute and the second entry providing the default value
+pdate_dataset_feat_info = {label:(int,-1),
+                           avg_star_rating:(float,0.0),
+                           review_count:(int,0),
+                           tip_count:(int,0)}
 
 data_feat_info = dict([])
 data_feat_names = []
 
-bus_feat_info = dict([
-    (business_id,str),
-#    ('name',str),
-#    ('full_address',str),
-#    ('city',str),
-    (state,str),
-#    ('latitude',float),
-#    ('longitude',float),
-#    ('review_count',int),
-#    ('open',int),
-    (first_review_date,int),
-    (last_review_date,int),
-    (census_tract,int)
-])
+bus_feat_info = {business_id:(str,'MISSING'),
+                 #name,(str,'MISSING'),
+                 #full_address,(str,'MISSING'),
+                 #city,(str,'MISSING'),
+                 state:(str,'MISSING'),
+                 #latitude,(float,-1.0),
+                 #longitude,(float,-1.0),
+                 #review_count,(int,0),
+                 #open_attr,(int,True),
+                first_review_date:(int,-1),
+                last_review_date:(int,-1),
+                census_tract:(int,-1)}
 
 bus_feat_names = bus_feat_info.keys()
 
@@ -82,21 +92,21 @@ def init_data_feats(file_path):
         csv_file = csv.reader(fin)
         # read the features
         for row in csv_file:
-            data_feat_info[row[0]] = bool
+            data_feat_info[row[0]] = (bool,False)
             data_feat_names.append(row[0])
         
         # set the type for ordinal attributes
-        data_feat_info['attributes.Ages Allowed'] = ages_allowed_values
-        data_feat_info['attributes.Attire'] = attire_values
-        data_feat_info['attributes.Smoking'] = smoking_values
-        data_feat_info['attributes.Wi-Fi'] = wifi_values
-        data_feat_info['attributes.BYOB/Corkage'] = byob_values
-        data_feat_info['attributes.Alcohol'] = alcohol_values
-        data_feat_info['attributes.Noise Level'] = noise_values
+        data_feat_info['attributes.Ages Allowed'] = (ages_allowed_values,None)
+        data_feat_info['attributes.Attire'] = (attire_values,None)
+        data_feat_info['attributes.Smoking'] = (smoking_values,None)
+        data_feat_info['attributes.Wi-Fi'] = (wifi_values,None)
+        data_feat_info['attributes.BYOB/Corkage'] = (byob_values,None)
+        data_feat_info['attributes.Alcohol'] = (alcohol_values,None)
+        data_feat_info['attributes.Noise Level'] = (noise_values,None)
         
         # set the type for numeric attributes
-        data_feat_info[review_count] = int
-        data_feat_info[stars] = float
+        data_feat_info[review_count] = (int,0)
+        data_feat_info[stars] = (float,0.0)
         
         return data_feat_info,data_feat_names
 
