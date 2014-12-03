@@ -76,10 +76,10 @@ data_feat_info = {label:(int,-1),
                   avg_star_rating:(float,0.0),
                   review_count:(int,0),
                   tip_count:(int,0)}
-for qtr in xrange(4):
-    data_feat_info[qtr_review_count[qtr]]=(int,0)
-    data_feat_info[qtr_tip_count[qtr]]=(int,0)
-    data_feat_info[qtr_avg_star_rating[qtr]]=(int,0)
+#for qtr in xrange(4):
+#    data_feat_info[qtr_review_count[qtr]]=(int,0)
+#    data_feat_info[qtr_tip_count[qtr]]=(int,0)
+#    data_feat_info[qtr_avg_star_rating[qtr]]=(int,0)
 
 data_feat_names = data_feat_info.keys()
 
