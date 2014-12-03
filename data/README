@@ -18,6 +18,9 @@ The filtered data files include the following content:
                         (represented as seconds since the epoch)
     - last_review_date  (latest date when a review or tip was submitted for the business)
                         (represented as seconds since the epoch)
+    - close_date        (estmated close date for the business if it is actually closed)
+                        (represented as seconds since the epoch)
+    - open (boolean indicating whether the business is still open)
     - census_tract (the ID of the census tract that includes the business)
  review.json:
   - reviews include only reviews for businesses included in business.json
@@ -38,7 +41,7 @@ The filtered data files include the following content:
 Summary statistics for the data set (as of Nov 30, 2014):
 
    13010 businesses
-       5 business features
+       7 business features
   694613 reviews
        5 review features
   243571 tips

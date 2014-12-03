@@ -18,6 +18,7 @@ tip_count = 'tip_count'
 date = 'date'
 first_review_date = 'first_review_date'
 last_review_date = 'last_review_date'
+close_date = 'close_date'
 stars = 'stars'
 likes = 'likes'
 star_total = 'star_total'
@@ -29,7 +30,7 @@ full_address = 'full_address'
 city = 'city'
 latitude = 'latitude'
 longitude = 'longitude'
-open_attr = 'open'
+is_open = 'open'
 
 # class names
 class_names = ['closed in  0-3 mos',
@@ -41,9 +42,9 @@ class_names = ['closed in  0-3 mos',
 # feat_info: key - attribute name, value - tuple with first entry providing the
 #     type of the attribute and the second entry providing the default value
 data_feat_info = {label:(int,-1),
-                           avg_star_rating:(float,0.0),
-                           review_count:(int,0),
-                           tip_count:(int,0)}
+                  avg_star_rating:(float,0.0),
+                  review_count:(int,0),
+                  tip_count:(int,0)}
 # features included in datasets generated for specified prediction dates
 data_feat_names = data_feat_info.keys()
 
@@ -52,13 +53,14 @@ bus_feat_info = {business_id:(str,'MISSING'),
                  #full_address,(str,'MISSING'),
                  #city,(str,'MISSING'),
                  state:(str,'MISSING'),
-                 #latitude,(float,-1.0),
-                 #longitude,(float,-1.0),
-                 #review_count,(int,0),
-                 #open_attr,(int,True),
-                first_review_date:(int,-1),
-                last_review_date:(int,-1),
-                census_tract:(int,-1)}
+                 #latitude:(float,-1.0),
+                 #longitude:(float,-1.0),
+                 #review_count:(int,0),
+                 is_open:(int,True),
+                 first_review_date:(int,-1),
+                 last_review_date:(int,-1),
+                 close_date:(int,-1),
+                 census_tract:(int,-1)}
 
 bus_feat_names = bus_feat_info.keys()
 

@@ -357,8 +357,8 @@ def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
                 # append this review to the list of reviews
                 reviews.append(review)
                 # process review dates
-                review_date = str2date(review[fi.date])
-                review[fi.date] = date2int(review_date)
+                review_date = date2int(str2date(review[fi.date]))
+                review[fi.date] = review_date
                 # process first and last review/tip dates
                 current_first = first_review_dates[bid]
                 current_last = last_review_dates[bid]
@@ -388,8 +388,8 @@ def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
                 # append this tip to the list of tips
                 tips.append(tip)
                 # process tip dates
-                tip_date = str2date(tip[fi.date])
-                tip[fi.date] = date2int(tip_date)
+                tip_date = date2int(str2date(tip[fi.date]))
+                tip[fi.date] = tip_date
                 # process first and last review/tip dates
                 current_first = first_review_dates[bid]
                 current_last = last_review_dates[bid]
@@ -408,11 +408,14 @@ def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
         bid = bus[fi.business_id]
         first_review_date = first_review_dates[bid]
         last_review_date = last_review_dates[bid]
+        is_closed = not bus[fi.is_open]
         tract = census_tracts[bid]
         if (first_review_date is not None):
-            bus[fi.first_review_date] = date2int(first_review_date)
+            bus[fi.first_review_date] = first_review_date
         if (last_review_date is not None):
-            bus[fi.last_review_date] = date2int(last_review_date)
+            bus[fi.last_review_date] = last_review_date
+            if (is_closed):
+                bus[fi.close_date] = last_review_date
         if (tract is not None):
             bus[fi.census_tract] = tract
 
