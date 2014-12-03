@@ -18,7 +18,7 @@ import jsonutils as ju
 import datautils as du
 import feat_info as fi
 import numpy as np
-import wfoutils
+import wfcvutils
 import sklearn.svm as svm
 import sklearn.metrics as metrics
 import sys
@@ -64,7 +64,7 @@ def run_script(busjson, revjson, tipjson, init_pdate, delta):
 
     # run the walk-forward cross validation and collect the results
     print('run walk-forward cross validation...')
-    results = wfoutils.wfocv(c, param_grid, all_buses, all_reviews, all_tips,
+    results = wfcvutils.wfcv(c, param_grid, all_buses, all_reviews, all_tips,
                              pdate, delta*du.month)
     
     # combine the results to produce overall metrics
