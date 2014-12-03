@@ -1,4 +1,4 @@
-The data directory contains four data files:
+The data directory contains the following files:
 
   filtered-json.tar.gz - compressed tar file that contains the following files:
     business.json - filtered version of yelp_academic_dataset_business.json
@@ -15,7 +15,9 @@ The filtered data files include the following content:
     - business_id
     - state
     - first_review_date (earliest date when a review or tip was submitted for the business)
-    - last_review_date (latest date when a review or tip was submitted for the business)
+                        (represented as seconds since the epoch)
+    - last_review_date  (latest date when a review or tip was submitted for the business)
+                        (represented as seconds since the epoch)
     - census_tract (the ID of the census tract that includes the business)
  review.json:
   - reviews include only reviews for businesses included in business.json
@@ -23,14 +25,14 @@ The filtered data files include the following content:
     - review_id
     - business_id
     - user_id
-    - date
+    - date (represented as seconds since the epoch)
     - stars
   tip.json:
   - tips include only tips for businesses included in business.json
   - attributes incude the following:
     - business_id
     - user_id
-    - date
+    - date (represented as seconds since the epoch)
     - likes
 
 Summary statistics for the data set (as of Nov 30, 2014):
@@ -44,13 +46,6 @@ Summary statistics for the data set (as of Nov 30, 2014):
 
 To recreate the JSON data files, do the following:
 
-  (assume that DATA references the data directory and CODE the code directory from the git repository)
+(assume that $BIN references the bin directory from the git repository)
 
-  $ python $CODE/createdatafiles.py $DATA/yelp_academic_dataset_business.json $DATA/business.json $DATA/yelp_academic_dataset_review.json $DATA/review.json $DATA/yelp_academic_dataset_tip.json $DATA/tip.json $DATA/business_tracts.csv
-  $ cd $DATA
-  $ tar cvzf filtered-json.tar.gz business.json review.json tip.json
-
-To extract the JSON data files from the archive:
-
-  $ cd $DATA
-  $ tar xvf filtered-json.tar.gz
+  $ $BIN/createdatafiles.sh
