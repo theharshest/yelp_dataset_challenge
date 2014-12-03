@@ -112,33 +112,37 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     class_counts = [0, 0, 0, 0, 0]
     for orig_bus in all_buses:
         open_date = orig_bus.get(fi.first_review_date,None)
-        close_date = orig_bus.get(fi.last_review_date,None)
-        if ((open_date is not None) and (open_date <= pdate) and
-            (close_date is not None) and (close_date > pdate)):
+        is_open = orig_bus[fi.is_open]
+        close_date = orig_bus.get(fi.close_date,None)
+        # make sure the restaurant meets the folowing criteria:
+        # - opened on or before the prediction date
+        # - is still open or closed after the prediction date
+        if ( ((open_date is not None) and (open_date <= pdate)) and
+             (is_open or ((close_date is not None) and (close_date > pdate))) ):
             # business meets the criteria - add a copy to dictionary
             bus = orig_bus.copy()
             buses[bus[fi.business_id]]=bus
             # set class label for business
+            if (is_open or (close_date > pdate_plus_12mos)):
+                # still open 12 months after pdate
+                bus[fi.label] = fi.open_12_mos
+                class_counts[fi.open_12_mos] = class_counts[fi.open_12_mos] + 1               
             if ((close_date > pdate) and (close_date <= pdate_plus_3mos)):
                 # closed 0-3 months after pdate
-                bus[fi.label] = 0
-                class_counts[0] = class_counts[0] + 1
+                bus[fi.label] = fi.closed_0_3_mos
+                class_counts[fi.closed_0_3_mos] = class_counts[fi.closed_0_3_mos] + 1
             elif ((close_date > pdate_plus_3mos) and (close_date <= pdate_plus_6mos)):
                 # closed 3-6 months after pdate
-                bus[fi.label] = 1
-                class_counts[1] = class_counts[1] + 1
+                bus[fi.label] = fi.closed_3_6_mos
+                class_counts[fi.closed_3_6_mos] = class_counts[fi.closed_3_6_mos] + 1
             elif ((close_date > pdate_plus_6mos) and (close_date <= pdate_plus_9mos)):
                 # closed 6-9 months after pdate
-                bus[fi.label] = 2
-                class_counts[2] = class_counts[2] + 1
+                bus[fi.label] = fi.closed_6_9_mos
+                class_counts[fi.closed_6_9_mos] = class_counts[fi.closed_6_9_mos] + 1
             elif ((close_date > pdate_plus_9mos) and (close_date <= pdate_plus_12mos)):
                 # closed 9-12 months after pdate
-                bus[fi.label] = 3
-                class_counts[3] = class_counts[3] + 1
-            elif (close_date > pdate_plus_12mos):
-                # still open 12 months after pdate
-                bus[fi.label] = 4
-                class_counts[4] = class_counts[4] + 1
+                bus[fi.label] = fi.closed_9_12_mos
+                class_counts[fi.closed_9_12_mos] = class_counts[fi.closed_9_12_mos] + 1
     # end for
 
     print '  number of businesses that passed date filter: %d' % len(buses.values())

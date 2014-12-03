@@ -32,6 +32,13 @@ latitude = 'latitude'
 longitude = 'longitude'
 is_open = 'open'
 
+# class labels
+closed_0_3_mos = 0
+closed_3_6_mos = 1
+closed_6_9_mos = 2
+closed_9_12_mos =3
+open_12_mos =    4
+
 # class names
 class_names = ['closed in  0-3 mos',
                'closed in  3-6 mos',
