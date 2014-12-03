@@ -13,8 +13,23 @@ tip_id = 'tip_id'
 user_id = 'user_id'
 label = 'label'
 avg_star_rating = 'avg_star_rating'
+qtr_avg_star_rating = []
+qtr_avg_star_rating.append('avg_star_rating_q1')
+qtr_avg_star_rating.append('avg_star_rating_q2')
+qtr_avg_star_rating.append('avg_star_rating_q3')
+qtr_avg_star_rating.append('avg_star_rating_q4')
 review_count = 'review_count'
+qtr_review_count = []
+qtr_review_count.append('review_count_q1')
+qtr_review_count.append('review_count_q2')
+qtr_review_count.append('review_count_q3')
+qtr_review_count.append('review_count_q4')
 tip_count = 'tip_count'
+qtr_tip_count = []
+qtr_tip_count.append('tip_count_q1')
+qtr_tip_count.append('tip_count_q2')
+qtr_tip_count.append('tip_count_q3')
+qtr_tip_count.append('tip_count_q4')
 date = 'date'
 first_review_date = 'first_review_date'
 last_review_date = 'last_review_date'
@@ -22,6 +37,11 @@ close_date = 'close_date'
 stars = 'stars'
 likes = 'likes'
 star_total = 'star_total'
+qtr_star_total = []
+qtr_star_total.append('star_total_q1')
+qtr_star_total.append('star_total_q2')
+qtr_star_total.append('star_total_q3')
+qtr_star_total.append('star_total_q4')
 state = 'state'
 census_tract = 'census_tract'
 restaurants = 'categories.Restaurants'
@@ -46,15 +66,24 @@ class_names = ['closed in  0-3 mos',
                'closed in 9-12 mos',
                'open after 12 mos']
 
-# feat_info: key - attribute name, value - tuple with first entry providing the
-#     type of the attribute and the second entry providing the default value
+# feat_info: (used when calling jsonutils.json2xy)
+#            key - attribute name
+#            value - tuple with first entry providing the type of the attribute
+#                    and the second entry providing the default value
+
+# features included in datasets generated for specified prediction dates
 data_feat_info = {label:(int,-1),
                   avg_star_rating:(float,0.0),
                   review_count:(int,0),
                   tip_count:(int,0)}
-# features included in datasets generated for specified prediction dates
+for qtr in xrange(4):
+    data_feat_info[qtr_review_count[qtr]]=(int,0)
+    data_feat_info[qtr_tip_count[qtr]]=(int,0)
+    data_feat_info[qtr_avg_star_rating[qtr]]=(int,0)
+
 data_feat_names = data_feat_info.keys()
 
+# features included in business.json
 bus_feat_info = {business_id:(str,'MISSING'),
                  #name,(str,'MISSING'),
                  #full_address,(str,'MISSING'),
@@ -71,6 +100,12 @@ bus_feat_info = {business_id:(str,'MISSING'),
 
 bus_feat_names = bus_feat_info.keys()
 
+# features included in review.json
+rev_feat_names = [review_id,business_id,user_id,date,stars]
+
+# features included in tip.json
+tip_feat_names = [business_id,user_id,date,likes]
+
 # filter used to filter business data
 restaurant_filter = {restaurants:[True],
                      state:['AZ','NV','WI']}
@@ -86,9 +121,6 @@ alcohol_values = [None,'none','beer_and_wine','full_bar']
 byob_values = [None,'no','yes_corkage','yes_free']
 smoking_values = [None,'no','outdoor','yes']
 wifi_values = [None,'no','paid','free']
-
-rev_feat_names = [review_id,business_id,user_id,date,stars]
-tip_feat_names = [business_id,user_id,date,likes]
 
 '''
 Load yelp features from the specified file.  The file can be found here:
