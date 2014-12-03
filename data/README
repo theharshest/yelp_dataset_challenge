@@ -46,6 +46,13 @@ Summary statistics for the data set (as of Nov 30, 2014):
 
 To recreate the JSON data files, do the following:
 
-(assume that $BIN references the bin directory from the git repository)
+  1. Download the Yelp! academic dataset files from the following location:
 
-  $ $BIN/createdatafiles.sh
+       https://drive.google.com/file/d/0B5ZscCPfMWQqSXFpVURSTWJHSG8/edit?usp=sharing
+
+  2. Extract the Yelp! academic dataset files into the <getrepo>/data directory
+
+  3. Execute the createdatafiles.sh script using the following (assume that $BIN references
+     the <gitrepo>/bin):
+
+       $ $BIN/createdatafiles.sh
