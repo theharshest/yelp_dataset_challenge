@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Utilities for doing "walk forward optimization".
+Utilities for doing "walk forward cross validation".
 
 Created on Sun Nov 30 09:51:14 2014
 
@@ -11,7 +11,6 @@ import time
 import feat_info as fi
 import datautils as du
 import jsonutils as ju
-import numpy as np
 import sklearn.metrics as metrics
 import sklearn.grid_search as grid_search
 

@@ -9,15 +9,15 @@ The code directory contains the following files:
   preprocessing.py -
   README - this readme file
   replacers.py -
-  runwfo.py - python script to run "walk-forward optimization"
-  wfoutils.py - python module containing utility functions for doing "walk forward optimization"
+  runwfcv.py - python script to run "walk-forward cross validation"
+  wfcvutils.py - python module containing utility functions for doing "walk forward cross validation"
 
 To run "walk forward cross validation" do the following:
 
-(assume that DATA references the data directory and CODE the code directory from the git repository,
- also assume that PDATE is the initial prediction date to be used (in YYYY-MM-DD format) and MONTHS
- is an integer indicating the number of months between the training prediction date and the test
- prediction date)
-
-  $ python $CODE/runwfo.py $DATA/business.json $DATA/review.json $DATA/tip.json $PDATE $MONTHS
+  1. Follow the instructions in the data/README to recreate the JSON data files
   
+  2. Execute the runwfcv.sh scriptas follows (assume that BIN references the <gitrepo>/bin directory,
+     PDATE is the initial prediction date in YYY-MM-DD format and MONTHS is the time delta between
+     prediction dates expressed as an integer nmuber of months):
+
+       $ $BIN/runwfcv.sh $PDATE $MONTHS  

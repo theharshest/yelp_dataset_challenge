@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Script used to run "walk forward optimization".
+Script used to run "walk forward cross validation".
 
 Arguments:
   busjson  - path to the file where filtered business data should be written
@@ -62,8 +62,8 @@ def run_script(busjson, revjson, tipjson, init_pdate, delta):
     # configure parameter grid for grid search
     param_grid = {'C': [1, 10, 100, 1000]}
 
-    # run the walk-forward optimization and collect the results
-    print('run walk-forward optimization...')
+    # run the walk-forward cross validation and collect the results
+    print('run walk-forward cross validation...')
     results = wfoutils.wfocv(c, param_grid, all_buses, all_reviews, all_tips,
                              pdate, delta*du.month)
     

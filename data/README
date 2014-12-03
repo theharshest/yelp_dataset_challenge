@@ -47,7 +47,7 @@ Summary statistics for the data set (as of Nov 30, 2014):
   243571 tips
        4 tip features
 
-To recreate the JSON data files, do the following:
+To create the JSON data files, do the following:
 
   1. Download the Yelp! academic dataset files from the following location:
 
@@ -55,7 +55,7 @@ To recreate the JSON data files, do the following:
 
   2. Extract the Yelp! academic dataset files into the <getrepo>/data directory
 
-  3. Execute the createdatafiles.sh script using the following (assume that $BIN references
-     the <gitrepo>/bin):
+  3. Execute the createdatafiles.sh script using the following (assume that BIN references
+     the <gitrepo>/bin directory):
 
        $ $BIN/createdatafiles.sh
