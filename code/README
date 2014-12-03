@@ -12,11 +12,12 @@ The code directory contains the following files:
   runwfo.py - python script to run "walk-forward optimization"
   wfoutils.py - python module containing utility functions for doing "walk forward optimization"
 
-To run "walk forward optimization" do the following:
+To run "walk forward cross validation" do the following:
 
 (assume that DATA references the data directory and CODE the code directory from the git repository,
- also assume that MONTHS is an integer indicating the number of months between the training prediction
- date and the test prediction date)
+ also assume that PDATE is the initial prediction date to be used (in YYYY-MM-DD format) and MONTHS
+ is an integer indicating the number of months between the training prediction date and the test
+ prediction date)
 
-  $ python $CODE/runwfo.py $DATA/business.json $DATA/review.json $DATA/tip.json $MONTHS
+  $ python $CODE/runwfo.py $DATA/business.json $DATA/review.json $DATA/tip.json $PDATE $MONTHS
   

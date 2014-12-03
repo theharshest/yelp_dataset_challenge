@@ -24,19 +24,26 @@ import sklearn.metrics as metrics
 import sys
 
 def main():
-    if (len(sys.argv) < 5):
+    if (len(sys.argv) < 6):
         usage(sys.argv)
         return
 
-    busjson   = sys.argv[1]
-    revjson   = sys.argv[2]
-    tipjson   = sys.argv[3]
-    delta     = int(sys.argv[4])
+    busjson    = sys.argv[1]
+    revjson    = sys.argv[2]
+    tipjson    = sys.argv[3]
+    init_pdate = sys.argv[4]
+    delta      = int(sys.argv[5])
 
-    run_script(busjson, revjson, tipjson, delta)
+    run_script(busjson, revjson, tipjson, init_pdate, delta)
 # end main
 
-def run_script(busjson, revjson, tipjson, delta):
+def run_script(busjson, revjson, tipjson, init_pdate, delta):
+    print 'Initial prediction date: %s' % init_pdate
+    print 'Time delta: %d months' % delta
+
+    # convert pdate to secondds since the epoch
+    pdate = du.date2int(du.str2date(init_pdate))
+
     # load business objects
     print 'Loading business objects from %s...' % busjson
     all_buses, junk = ju.load_objects(busjson)
@@ -52,9 +59,13 @@ def run_script(busjson, revjson, tipjson, delta):
     # create classifier to test
     c = svm.LinearSVC()
 
+    # configure parameter grid for grid search
+    param_grid = {'C': [1, 10, 100, 1000]}
+
     # run the walk-forward optimization and collect the results
     print('run walk-forward optimization...')
-    results = wfoutils.wfocv(c, all_buses, all_reviews, all_tips, delta*du.month)
+    results = wfoutils.wfocv(c, param_grid, all_buses, all_reviews, all_tips,
+                             pdate, delta*du.month)
     
     # combine the results to produce overall metrics
     y_true = None
@@ -69,16 +80,13 @@ def run_script(busjson, revjson, tipjson, delta):
         else:
             y_pred = np.hstack((y_pred, r[1]))
     
-    print len(y_true)
-    print len(y_pred)
-
     # print out an overall classification report
     print('\nOverall metrics for all prediction dates:\n')
     print(metrics.classification_report(y_true, y_pred, target_names=fi.class_names))
 # end run_script
 
 def usage(argv):
-    print 'Usage: %s <busjson> <revjson> <tipjson> <delta>' % argv[0]
+    print 'Usage: %s <busjson> <revjson> <tipjson> <pdate> <delta>' % argv[0]
 # end usage
 
 # run main method when this file is run from command line
