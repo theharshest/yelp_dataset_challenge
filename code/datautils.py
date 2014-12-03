@@ -149,9 +149,17 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     for i in xrange(5):
         print '    class %1d: %5d' % (i,class_counts[i])
 
+    qtr_boundary = [0,0,0,0,0]
+    qtr_boundary[0] = pdate
+    qtr_boundary[1] =  pdate-3*month
+    qtr_boundary[2] =  pdate-6*month
+    qtr_boundary[3] =  pdate-9*month
+    qtr_boundary[4] = pdate-12*month
+
     # filter reviews that do not pertain to one of the remaining businesses or
     # were not submitted before pdate
     all_rev_count = 0
+    qtr_rev_counts = [0, 0, 0, 0]
     for review in all_reviews:
         # look for the reviewed business
         bid = review[fi.business_id]
@@ -161,38 +169,70 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
         if (obj is not None):
             rdate = review[fi.date]
             if (rdate <= pdate):
-                # update review count
+                all_rev_count = all_rev_count + 1
+
+                # update overall review count
                 rcount = obj.get(fi.review_count,0)
                 obj[fi.review_count] = rcount + 1
-                # update star total
+                # update overall star total
                 stars = review.get(fi.stars,0)
                 stotal = obj.get(fi.star_total,0)
                 obj[fi.star_total] = stotal + stars
 
-                all_rev_count = all_rev_count + 1
+                # update the quarterly review counts and star totals
+                for qtr in xrange(4):
+                    if ((rdate > qtr_boundary[qtr+1]) and (rdate <= qtr_boundary[qtr])):
+                        # review submitted during this quarter
+                        qtr_rev_counts[qtr] = qtr_rev_counts[qtr] + 1
+                        # update review count for this quarter
+                        qtr_rcount = obj.get(fi.qtr_review_count[qtr],0)
+                        obj[fi.qtr_review_count[qtr]] = qtr_rcount + 1
+                        # update star total for this quarter
+                        qtr_stotal = obj.get(fi.qtr_star_total[qtr],0)
+                        obj[fi.qtr_star_total[qtr]] = qtr_stotal + stars
+                        # don't need to check the other quarters for this review
+                        break
     # end for
 
     print '  number of reviews that passed filter: %d' % all_rev_count
+    for i in xrange(4):
+        print '    review count q%1d: %5d' % (i+1,qtr_rev_counts[i])
 
     # filter tips that do not pertain to one of the remaining businesses or
     # were not submitted before pdate
     all_tip_count = 0
+    qtr_tip_counts = [0, 0, 0, 0]
     for tip in all_tips:
         # look for the reviewed business
         bid = tip[fi.business_id]
         obj = buses.get(bid, None)
 
-        # increment tip cunt for the business
+        # update tip_count for the business
         if (obj is not None):
             tdate = tip[fi.date]
             if (tdate <= pdate):
+                all_tip_count = all_tip_count + 1
+
+                # update overall tip count
                 tcount = obj.get(fi.tip_count,0)
                 obj[fi.tip_count] = tcount + 1
 
-                all_tip_count = all_tip_count + 1
+                # update quarterly tip counts
+                for qtr in xrange(4):
+                    if ((tdate > qtr_boundary[qtr+1]) and (tdate <= qtr_boundary[qtr])):
+                        # tip submitted during this quarter
+                        qtr_tip_counts[qtr] = qtr_tip_counts[qtr] + 1
+                        # update review count for this quarter
+                        qtr_tcount = obj.get(fi.qtr_tip_count[qtr],0)
+                        obj[fi.qtr_tip_count[qtr]] = qtr_tcount + 1
+                        # don't need to check the other quarters for this tip
+                        break
+
     # end for
 
     print '  number of tips that passed filter: %d' % all_tip_count
+    for i in xrange(4):
+        print '    tip count q%1d: %5d' % (i+1,qtr_tip_counts[i])
 
     # add census data
     # TBD
@@ -200,15 +240,24 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     # add economic data
     # TBD
 
-    # calculate average star ranking and remove unneeded attributes
+    # calculate average star ratings and remove unneeded attributes
     for bus in buses.values():
-        # get review count and star total
+        # get overall review count
         rcount = bus.get(fi.review_count,0)
-        stotal = bus.get(fi.star_total,0)
 
-        # calculate average star rating
+        # calculate overall average star rating
         if (rcount > 0):
+            # get overall star total
+            stotal = bus.get(fi.star_total,0)
+            # calculate overall average star rating
             bus[fi.avg_star_rating] = float(stotal)/float(rcount)
+
+        # calculate quarterly average star rating
+        for qtr in xrange(4):
+            qtr_rcount = bus.get(fi.qtr_review_count[qtr])
+            if (qtr_rcount > 0):
+                qtr_stotal = bus.get(fi.qtr_star_total[qtr])
+                bus[fi.qtr_avg_star_rating[qtr]] = float(qtr_stotal)/float(qtr_rcount)
 
         # filter out unneeded attributes
         jsonutils.filter_dict(bus, fi.data_feat_names, copy=False)
