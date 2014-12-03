@@ -246,8 +246,7 @@ Inputs:
     type and default value for each attribute
 
   label_attr:
-    the name of the attribute that holds the class label, by default this is
-    feat_info.label
+    the name of the attribute that holds the class label
 
 Outputs:
 
