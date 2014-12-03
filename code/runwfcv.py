@@ -6,8 +6,9 @@ Arguments:
   busjson  - path to the file where filtered business data should be written
   revjson  - path to the file where filtered review data should be written
   tipjson  - path to the file where filtered tip data should be written
+  pdate    - the initial prediction date to use for walking forward
   delta    - the number of months between training prediction date and test
-             prediction date
+             prediction date (the size of the steps)
 
 Created on Sun Nov 30 23:26:13 2014
 
@@ -16,7 +17,7 @@ Created on Sun Nov 30 23:26:13 2014
 
 import jsonutils as ju
 import datautils as du
-import feat_info as fi
+import feat_info as fi # for class_names
 import numpy as np
 import wfcvutils
 import sklearn.svm as svm
