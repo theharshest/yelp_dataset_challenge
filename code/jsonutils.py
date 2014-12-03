@@ -10,6 +10,7 @@ Created on Sun Nov 30 19:57:18 2014
 import json
 import io
 import numpy as np
+import scipy.stats as stats
 
 # ==================================================
 # Functions to load JSON objects from JSON files
@@ -248,6 +249,10 @@ Inputs:
   label_attr:
     the name of the attribute that holds the class label
 
+  std: (optional)
+    whether the attribute values should be standardized to have a mean of zero
+    and a standard deviation of one (default is True)
+
 Outputs:
 
   X:
@@ -256,10 +261,10 @@ Outputs:
   y:
     a sparse matrix with one column containing the class labels
 '''
-def json2xy(json, column_info, label_attr):
+def json2xy(json, column_info, label_attr,std=True):
     # convert JSON into a feature matrix
     data, columns = get_matrix(json, column_info=column_info)
-    
+
     # get the column index of the class label
     y_idx = columns.index(label_attr)
     
@@ -274,6 +279,8 @@ def json2xy(json, column_info, label_attr):
 
     # create the example attributes matrix
     X = data[:,X_idx]
+    if (std):
+        X = stats.zscore(X,axis=0)
     
     # return the result
     return X,y
