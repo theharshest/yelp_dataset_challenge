@@ -71,3 +71,9 @@ The resulting data set will include the following attributes:
     tip_count_py_q2
     tip_count_py_q3
     tip_count_py_q4
+
+To convert a JSON file into a CSV file do the following:
+
+   1. Execute the json2csv.sh script as follows:
+
+        $ $BIN/json2csv.sh <jsonfile> <csvfile>
