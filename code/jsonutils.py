@@ -212,7 +212,7 @@ def write_objects(objects, fout, filt=None, attfilt=None):
         # add the object to the list if it passed the filter
         if (passed_filter):
             # write the object to the file
-            fout.write(unicode(json.dumps(obj,ensure_ascii=False))+'\n')
+            fout.write(unicode(json.dumps(obj,ensure_ascii=False,sort_keys=True))+'\n')
     # end for
 # end write_objects
 
@@ -261,7 +261,7 @@ Outputs:
   y:
     a sparse matrix with one column containing the class labels
 '''
-def json2xy(json, column_info, label_attr,std=True):
+def json2xy(json, column_info, label_attr, std=True):
     # convert JSON into a feature matrix
     data, columns = get_matrix(json, column_info=column_info)
 
@@ -281,7 +281,7 @@ def json2xy(json, column_info, label_attr,std=True):
     X = data[:,X_idx]
     if (std):
         X = stats.zscore(X,axis=0)
-    
+
     # return the result
     return X,y
 
