@@ -80,10 +80,13 @@ def run_script(busjson, revjson, tipjson, init_pdate, delta):
             y_pred = r[1]
         else:
             y_pred = np.hstack((y_pred, r[1]))
-    
+
     # print out an overall classification report
     print('\nOverall metrics for all prediction dates:\n')
-    print(metrics.classification_report(y_true, y_pred, target_names=fi.class_names))
+    if (len(results) != 0):
+        print(metrics.classification_report(y_true, y_pred, target_names=fi.class_names))
+    else:
+        print '  NO RESULTS\n'
 # end run_script
 
 def usage(argv):
