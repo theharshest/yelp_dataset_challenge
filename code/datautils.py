@@ -11,8 +11,10 @@ Created on Wed Oct 29 18:31:04 2014
 import json
 import feat_info as fi
 import time
+import math
 import jsonutils
 import csvutils
+import numpy as np
 
 # initialize time constants assuming 30 day months
 # - 30 days x 24 hrs/day x 60 min/hr x 60 sec/min
@@ -101,10 +103,10 @@ Outputs:
     of the original JSON objects so that the objects in all_buses are not modified
 '''
 def gen_dataset(pdate, all_buses, all_reviews, all_tips):
-    pdate_plus_3mos  =  pdate+3*month
-    pdate_plus_6mos  =  pdate+6*month
-    pdate_plus_9mos  =  pdate+9*month
-    pdate_plus_12mos = pdate+12*month
+    pdate_plus_3mos  =  pdate+3*month # end of following year 1st quarter
+    pdate_plus_6mos  =  pdate+6*month # end of following year 2nd quarter
+    pdate_plus_9mos  =  pdate+9*month # end of following year 3rd quarter
+    pdate_plus_12mos = pdate+12*month # end of following year 4th quarter
 
     # filter businesses that were not open before pdate or closed before pdate
     # and set the class label for those that remain
@@ -125,24 +127,24 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
             # set class label for business
             if (is_open or (close_date > pdate_plus_12mos)):
                 # still open 12 months after pdate
-                bus[fi.label] = fi.open_12_mos
-                class_counts[fi.open_12_mos] = class_counts[fi.open_12_mos] + 1               
+                bus[fi.label] = fi.still_open
+                class_counts[fi.still_open] = class_counts[fi.still_open] + 1
             if ((close_date > pdate) and (close_date <= pdate_plus_3mos)):
                 # closed 0-3 months after pdate
-                bus[fi.label] = fi.closed_0_3_mos
-                class_counts[fi.closed_0_3_mos] = class_counts[fi.closed_0_3_mos] + 1
+                bus[fi.label] = fi.closed_q1
+                class_counts[fi.closed_q1] = class_counts[fi.closed_q1] + 1
             elif ((close_date > pdate_plus_3mos) and (close_date <= pdate_plus_6mos)):
                 # closed 3-6 months after pdate
-                bus[fi.label] = fi.closed_3_6_mos
-                class_counts[fi.closed_3_6_mos] = class_counts[fi.closed_3_6_mos] + 1
+                bus[fi.label] = fi.closed_q2
+                class_counts[fi.closed_q2] = class_counts[fi.closed_q2] + 1
             elif ((close_date > pdate_plus_6mos) and (close_date <= pdate_plus_9mos)):
                 # closed 6-9 months after pdate
-                bus[fi.label] = fi.closed_6_9_mos
-                class_counts[fi.closed_6_9_mos] = class_counts[fi.closed_6_9_mos] + 1
+                bus[fi.label] = fi.closed_q3
+                class_counts[fi.closed_q3] = class_counts[fi.closed_q3] + 1
             elif ((close_date > pdate_plus_9mos) and (close_date <= pdate_plus_12mos)):
                 # closed 9-12 months after pdate
-                bus[fi.label] = fi.closed_9_12_mos
-                class_counts[fi.closed_9_12_mos] = class_counts[fi.closed_9_12_mos] + 1
+                bus[fi.label] = fi.closed_q4
+                class_counts[fi.closed_q4] = class_counts[fi.closed_q4] + 1
     # end for
 
     print '  number of businesses that passed date filter: %d' % len(buses.values())
@@ -150,11 +152,11 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
         print '    class %1d: %5d' % (i,class_counts[i])
 
     qtr_boundary = [0,0,0,0,0]
-    qtr_boundary[0] = pdate
-    qtr_boundary[1] =  pdate-3*month
-    qtr_boundary[2] =  pdate-6*month
-    qtr_boundary[3] =  pdate-9*month
-    qtr_boundary[4] = pdate-12*month
+    qtr_boundary[0] = pdate-12*month # start of prior year 1th quarter
+    qtr_boundary[1] = pdate -9*month # start of prior year 2nd quarter
+    qtr_boundary[2] = pdate -6*month # start of prior year 3rd quarter
+    qtr_boundary[3] = pdate -3*month # start of prior year 4th quarter
+    qtr_boundary[4] = pdate          # end of prior year 4st quarter
 
     # filter reviews that do not pertain to one of the remaining businesses or
     # were not submitted before pdate
@@ -181,7 +183,7 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
 
                 # update the quarterly review counts and star totals
                 for qtr in xrange(4):
-                    if ((rdate > qtr_boundary[qtr+1]) and (rdate <= qtr_boundary[qtr])):
+                    if ((rdate > qtr_boundary[qtr]) and (rdate <= qtr_boundary[qtr+1])):
                         # review submitted during this quarter
                         qtr_rev_counts[qtr] = qtr_rev_counts[qtr] + 1
                         # update review count for this quarter
@@ -219,7 +221,7 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
 
                 # update quarterly tip counts
                 for qtr in xrange(4):
-                    if ((tdate > qtr_boundary[qtr+1]) and (tdate <= qtr_boundary[qtr])):
+                    if ((tdate > qtr_boundary[qtr]) and (tdate <= qtr_boundary[qtr+1])):
                         # tip submitted during this quarter
                         qtr_tip_counts[qtr] = qtr_tip_counts[qtr] + 1
                         # update review count for this quarter
@@ -240,7 +242,7 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     # add economic data
     # TBD
 
-    # calculate average star ratings and remove unneeded attributes
+    # calculate average star ratings, percent changes and remove unneeded attributes
     for bus in buses.values():
         # get overall review count
         rcount = bus.get(fi.review_count,0)
@@ -252,12 +254,39 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
             # calculate overall average star rating
             bus[fi.avg_star_rating] = float(stotal)/float(rcount)
 
-        # calculate quarterly average star rating
+        # calculate quarterly average star rating and quarterly percent changes
         for qtr in xrange(4):
-            qtr_rcount = bus.get(fi.qtr_review_count[qtr])
+            # calculate quarterly average star rating
+            qtr_rcount = bus.get(fi.qtr_review_count[qtr],0)
             if (qtr_rcount > 0):
-                qtr_stotal = bus.get(fi.qtr_star_total[qtr])
+                qtr_stotal = bus.get(fi.qtr_star_total[qtr],0)
                 bus[fi.qtr_avg_star_rating[qtr]] = float(qtr_stotal)/float(qtr_rcount)
+
+            # calculate percent change for quarterly review counts, tip counts,
+            # star total and average star ratings
+            # - the average star ratings are calculated in this loop, so the
+            #   next quarter value is not available during this iteration
+            # - calculate using previous quarter and current quarter, so skip
+            #   first iteration so a previous value is available for avg star rating
+            if (qtr > 0):
+                # quarterly review count percent change
+                prev_qtr_rcount = bus.get(fi.qtr_review_count[qtr-1],0)
+                bus[fi.qtr_review_count_pc[qtr-1]] = pct_change(prev_qtr_rcount, qtr_rcount)
+
+                # quarterly tip count percent change
+                qtr_tcount = bus.get(fi.qtr_tip_count[qtr],0)
+                prev_qtr_tcount = bus.get(fi.qtr_tip_count[qtr-1],0)
+                bus[fi.qtr_tip_count_pc[qtr-1]] = pct_change(prev_qtr_tcount, qtr_tcount)
+
+                # quarterly star total percent change
+                qtr_st = bus.get(fi.qtr_star_total[qtr],0)
+                prev_qtr_st = bus.get(fi.qtr_star_total[qtr-1],0)
+                bus[fi.qtr_star_total_pc[qtr-1]] = pct_change(prev_qtr_st, qtr_st)
+
+                # quarterly average star rating percent change
+                qtr_asr = bus.get(fi.qtr_avg_star_rating[qtr],0)
+                prev_qtr_asr = bus.get(fi.qtr_avg_star_rating[qtr-1],0)
+                bus[fi.qtr_avg_star_rating_pc[qtr-1]] = pct_change(prev_qtr_asr, qtr_asr)
 
         # filter out unneeded attributes
         jsonutils.filter_dict(bus, fi.data_feat_names, copy=False)
@@ -511,3 +540,16 @@ def date2int(d):
 
 def int2date(secs):
     return time.localtime(secs)
+
+# ==================================================
+# Math functions
+# ==================================================
+def pct_change(old_val, new_val):
+    if (np.allclose(old_val,new_val)):
+        return 0
+    elif (not np.allclose(old_val,0)):
+        return float(new_val - old_val)/float(old_val)
+    elif (not np.allclose(new_val,0)):
+        return math.log(new_val) # - math.log(1)
+    else:
+        return 0.0
