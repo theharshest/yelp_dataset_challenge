@@ -15,10 +15,59 @@ The code directory contains the following files:
 
 To run "walk forward cross validation" do the following:
 
-  1. Follow the instructions in the data/README to recreate the JSON data files
+  1. Follow the instructions in the data/README to recreate the base JSON data files
   
-  2. Execute the runwfcv.sh scriptas follows (assume that BIN references the <gitrepo>/bin directory,
+  2. Execute the runwfcv.sh script as follows (assume that BIN references the <gitrepo>/bin directory,
      PDATE is the initial prediction date in YYY-MM-DD format and MONTHS is the time delta between
      prediction dates expressed as an integer nmuber of months):
 
        $ $BIN/runwfcv.sh $PDATE $MONTHS  
+
+To generate a data set for a specified prediction date do the following:
+
+  1. Follow the instructions in the data/README to recreate the base JSON data files
+  
+  2. Execute the gendataset.sh script as follows (assume that BIN references the <gitrepo>/bin directory,
+     PDATE is the initial prediction date in YYY-MM-DD format and OUTFILE is the name of the file
+     where the resulting data set should be written):
+
+       $ $BIN/gendataset.sh $PDATE $OUTFILE
+
+The resulting data set will include the following attributes:
+    (naming conventions for attribute names:
+       py_qN - the value is for quarter N of the year prior to the prediction date
+       %c_py_qN_qM - percent change from prior year quarter N to prior year quarter M)
+
+    avg_star_rating
+    avg_star_rating_%c_py_q1_q2
+    avg_star_rating_%c_py_q2_q3
+    avg_star_rating_%c_py_q3_q4
+    avg_star_rating_py_q1
+    avg_star_rating_py_q2
+    avg_star_rating_py_q3
+    avg_star_rating_py_q4
+    label
+    review_count
+    review_count_%c_py_q1_q2
+    review_count_%c_py_q2_q3
+    review_count_%c_py_q3_q4
+    review_count_py_q1
+    review_count_py_q2
+    review_count_py_q3
+    review_count_py_q4
+    star_total
+    star_total_pc_py_q1_q2
+    star_total_pc_py_q2_q3
+    star_total_pc_py_q3_q4
+    star_total_py_q1
+    star_total_py_q2
+    star_total_py_q3
+    star_total_py_q4
+    tip_count
+    tip_count_%c_py_q1_q2
+    tip_count_%c_py_q2_q3
+    tip_count_%c_py_q3_q4
+    tip_count_py_q1
+    tip_count_py_q2
+    tip_count_py_q3
+    tip_count_py_q4
