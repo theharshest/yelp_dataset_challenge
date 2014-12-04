@@ -119,7 +119,7 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_del
         y_pred = gs.predict(X_test)
 
         print("\nScores on evaluation set:\n")
-        print(metrics.classification_report(y_test, y_pred))
+        print(metrics.classification_report(y_test, y_pred, target_names=fi.class_names))
 
         # save results
         results.append((y_test, y_pred))
