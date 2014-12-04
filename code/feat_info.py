@@ -13,23 +13,8 @@ tip_id = 'tip_id'
 user_id = 'user_id'
 label = 'label'
 avg_star_rating = 'avg_star_rating'
-qtr_avg_star_rating = []
-qtr_avg_star_rating.append('avg_star_rating_q1')
-qtr_avg_star_rating.append('avg_star_rating_q2')
-qtr_avg_star_rating.append('avg_star_rating_q3')
-qtr_avg_star_rating.append('avg_star_rating_q4')
 review_count = 'review_count'
-qtr_review_count = []
-qtr_review_count.append('review_count_q1')
-qtr_review_count.append('review_count_q2')
-qtr_review_count.append('review_count_q3')
-qtr_review_count.append('review_count_q4')
 tip_count = 'tip_count'
-qtr_tip_count = []
-qtr_tip_count.append('tip_count_q1')
-qtr_tip_count.append('tip_count_q2')
-qtr_tip_count.append('tip_count_q3')
-qtr_tip_count.append('tip_count_q4')
 date = 'date'
 first_review_date = 'first_review_date'
 last_review_date = 'last_review_date'
@@ -37,11 +22,6 @@ close_date = 'close_date'
 stars = 'stars'
 likes = 'likes'
 star_total = 'star_total'
-qtr_star_total = []
-qtr_star_total.append('star_total_q1')
-qtr_star_total.append('star_total_q2')
-qtr_star_total.append('star_total_q3')
-qtr_star_total.append('star_total_q4')
 state = 'state'
 census_tract = 'census_tract'
 restaurants = 'categories.Restaurants'
@@ -52,19 +32,72 @@ latitude = 'latitude'
 longitude = 'longitude'
 is_open = 'open'
 
+# attribute names for quarterly values from the year prior to the prediction date
+# - py_q1 values cover the time period 9-12 months prior to prediction date
+# - py_q2 values cover the time period 6-9 months prior to prediction date
+# - py_q3 values cover the time period 3-6 months prior to prediction date
+# - py_q4 values cover the time period 0-3 months prior to prediction date
+qtr_avg_star_rating = []
+qtr_avg_star_rating.append('avg_star_rating_py_q1')
+qtr_avg_star_rating.append('avg_star_rating_py_q2')
+qtr_avg_star_rating.append('avg_star_rating_py_q3')
+qtr_avg_star_rating.append('avg_star_rating_py_q4')
+
+qtr_review_count = []
+qtr_review_count.append('review_count_py_q1')
+qtr_review_count.append('review_count_py_q2')
+qtr_review_count.append('review_count_py_q3')
+qtr_review_count.append('review_count_py_q4')
+
+qtr_tip_count = []
+qtr_tip_count.append('tip_count_py_q1')
+qtr_tip_count.append('tip_count_py_q2')
+qtr_tip_count.append('tip_count_py_q3')
+qtr_tip_count.append('tip_count_py_q4')
+
+qtr_star_total = []
+qtr_star_total.append('star_total_py_q1')
+qtr_star_total.append('star_total_py_q2')
+qtr_star_total.append('star_total_py_q3')
+qtr_star_total.append('star_total_py_q4')
+
+# quarterly percent change attribute names
+# - py_q1_q2 are percent change from prior year q1 to prior year q2
+# - py_q2_q3 are percent change from prior year q2 to prior year q3
+# - py_q4_q3 are percent change from prior year q3 to prior year q4
+qtr_avg_star_rating_pc = []
+qtr_avg_star_rating_pc.append('avg_star_rating_%c_py_q1_q2')
+qtr_avg_star_rating_pc.append('avg_star_rating_%c_py_q2_q3')
+qtr_avg_star_rating_pc.append('avg_star_rating_%c_py_q3_q4')
+
+qtr_review_count_pc = []
+qtr_review_count_pc.append('review_count_%c_py_q1_q2')
+qtr_review_count_pc.append('review_count_%c_py_q2_q3')
+qtr_review_count_pc.append('review_count_%c_py_q3_q4')
+
+qtr_tip_count_pc = []
+qtr_tip_count_pc.append('tip_count_%c_py_q1_q2')
+qtr_tip_count_pc.append('tip_count_%c_py_q2_q3')
+qtr_tip_count_pc.append('tip_count_%c_py_q3_q4')
+
+qtr_star_total_pc = []
+qtr_star_total_pc.append('star_total_pc_py_q1_q2')
+qtr_star_total_pc.append('star_total_pc_py_q2_q3')
+qtr_star_total_pc.append('star_total_pc_py_q3_q4')
+
 # class labels
-closed_0_3_mos = 0
-closed_3_6_mos = 1
-closed_6_9_mos = 2
-closed_9_12_mos =3
-open_12_mos =    4
+closed_q1  = 0
+closed_q2  = 1
+closed_q3  = 2
+closed_q4  = 3
+still_open = 4
 
 # class names
-class_names = ['closed in  0-3 mos',
-               'closed in  3-6 mos',
-               'closed in  6-9 mos',
-               'closed in 9-12 mos',
-               'open after 12 mos']
+class_names = ['closed in Q1',   # closed 0-3 months following prediction date
+               'closed in Q2',   # closed 3-6 months following prediction date
+               'closed in Q3',   # closed 6-9 months following prediction date
+               'closed in Q4',   # closed 9-12 months following prediction date
+               'open after Q4']  # still open 12 months after the prediction date
 
 # feat_info: (used when calling jsonutils.json2xy)
 #            key - attribute name
@@ -73,13 +106,20 @@ class_names = ['closed in  0-3 mos',
 
 # features included in datasets generated for specified prediction dates
 data_feat_info = {label:(int,-1),
+                  star_total:(float,0.0),
                   avg_star_rating:(float,0.0),
                   review_count:(int,0),
                   tip_count:(int,0)}
-#for qtr in xrange(4):
-#    data_feat_info[qtr_review_count[qtr]]=(int,0)
-#    data_feat_info[qtr_tip_count[qtr]]=(int,0)
-#    data_feat_info[qtr_avg_star_rating[qtr]]=(int,0)
+for qtr in xrange(4):
+    data_feat_info[qtr_review_count[qtr]]=(int,0)
+    data_feat_info[qtr_tip_count[qtr]]=(int,0)
+    data_feat_info[qtr_avg_star_rating[qtr]]=(float,0)
+    data_feat_info[qtr_star_total[qtr]]=(float,0)
+for qtr in xrange(3):
+    data_feat_info[qtr_review_count_pc[qtr]]=(float,0)
+    data_feat_info[qtr_tip_count_pc[qtr]]=(float,0)
+    data_feat_info[qtr_avg_star_rating_pc[qtr]]=(float,0)
+    data_feat_info[qtr_star_total_pc[qtr]]=(float,0)
 
 data_feat_names = data_feat_info.keys()
 
