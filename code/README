@@ -12,6 +12,8 @@ The code directory contains the following files:
   replacers.py -
   runwfcv.py - python script to run "walk-forward cross validation"
   wfcvutils.py - python module containing utility functions for doing "walk forward cross validation"
+  preprocessing.py - module having text preprocessing utility, used by sentiment classifier
+  sentiment_classifier.py - script to generate sentiment scores using reviews text and tips text
 
 To run "walk forward cross validation" do the following:
 
