@@ -30,7 +30,7 @@ To generate a data set for a specified prediction date do the following:
   1. Follow the instructions in the data/README to recreate the base JSON data files
   
   2. Execute the gendataset.sh script as follows (assume that BIN references the <gitrepo>/bin directory,
-     PDATE is the initial prediction date in YYY-MM-DD format and OUTFILE is the name of the file
+     PDATE is the initial prediction date in YYYY-MM-DD format and OUTFILE is the name of the file
      where the resulting data set should be written):
 
        $ $BIN/gendataset.sh $PDATE $OUTFILE
