@@ -7,7 +7,7 @@ The code directory contains the following files:
   find_census_tract.py - python script to write the business_tracts.csv file
   gendataset.py - python script to generate data sets for a specified prediction date and write them to file
   jsonutils.py - python module containing utility functions for working with JSON objects & files
-  preprocessing.py -
+  preprocessing.py - uses replacers.py to lowercase and normalize text
   README - this readme file
   replacers.py - module used by preprocessing, contains helper functions to normalize text
   runwfcv.py - python script to run "walk-forward cross validation"
@@ -21,7 +21,7 @@ To run "walk forward cross validation" do the following:
   
   2. Execute the runwfcv.sh script as follows (assume that BIN references the <gitrepo>/bin directory,
      PDATE is the initial prediction date in YYYY-MM-DD format and MONTHS is the time delta between
-     prediction dates expressed as an integer nmuber of months):
+     prediction dates expressed as an integer number of months):
 
        $ $BIN/runwfcv.sh $PDATE $MONTHS  
 
