@@ -9,7 +9,7 @@ The code directory contains the following files:
   jsonutils.py - python module containing utility functions for working with JSON objects & files
   preprocessing.py -
   README - this readme file
-  replacers.py -
+  replacers.py - module used by preprocessing, contains helper functions to normalize text
   runwfcv.py - python script to run "walk-forward cross validation"
   wfcvutils.py - python module containing utility functions for doing "walk forward cross validation"
   preprocessing.py - module having text preprocessing utility, used by sentiment classifier
