@@ -99,13 +99,11 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_del
 
         # configure scoring metric to be used during grid search
         # - select a metric that is suited to unbalanced classification
-        #scoring_metric = metrics.f1_score
+        scorer = 'f1'
 
         # train the classifier using grod search
         # start by using deafults
-        gs = grid_search.GridSearchCV(clf, param_grid, n_jobs=-1)
-        #gs = grid_search.GridSearchCV(clf, param_grid, cv=5, scoring=scoring_metric)
-        #                              n_jobs=n_jobs, pre_dispatch=n_jobs)
+        gs = grid_search.GridSearchCV(clf, param_grid, n_jobs=-1, scoring=scorer)
         gs.fit(X_train, y_train)
 
         print("\nBest parameters set found on development set:\n")
