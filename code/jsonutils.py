@@ -10,6 +10,7 @@ Created on Sun Nov 30 19:57:18 2014
 import json
 import io
 import numpy as np
+import scipy.stats as stats
 
 # ==================================================
 # Functions to load JSON objects from JSON files
@@ -211,7 +212,7 @@ def write_objects(objects, fout, filt=None, attfilt=None):
         # add the object to the list if it passed the filter
         if (passed_filter):
             # write the object to the file
-            fout.write(unicode(json.dumps(obj,ensure_ascii=False))+'\n')
+            fout.write(unicode(json.dumps(obj,ensure_ascii=False,sort_keys=True))+'\n')
     # end for
 # end write_objects
 
@@ -246,8 +247,11 @@ Inputs:
     type and default value for each attribute
 
   label_attr:
-    the name of the attribute that holds the class label, by default this is
-    feat_info.label
+    the name of the attribute that holds the class label
+
+  std: (optional)
+    whether the attribute values should be standardized to have a mean of zero
+    and a standard deviation of one (default is True)
 
 Outputs:
 
@@ -257,10 +261,10 @@ Outputs:
   y:
     a sparse matrix with one column containing the class labels
 '''
-def json2xy(json, column_info, label_attr):
+def json2xy(json, column_info, label_attr, std=True):
     # convert JSON into a feature matrix
     data, columns = get_matrix(json, column_info=column_info)
-    
+
     # get the column index of the class label
     y_idx = columns.index(label_attr)
     
@@ -275,7 +279,13 @@ def json2xy(json, column_info, label_attr):
 
     # create the example attributes matrix
     X = data[:,X_idx]
-    
+    if (std):
+        # if a column contains all the same value then zscore will return nan
+        # - add small amount of random noise to the matrix
+        X = X + np.random.normal(0,0.0001,X.shape)
+        # calculate zscores for the augmented elements in the array
+        X = stats.zscore(X,axis=0)
+
     # return the result
     return X,y
 

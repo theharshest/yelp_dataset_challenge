@@ -11,8 +11,10 @@ Created on Wed Oct 29 18:31:04 2014
 import json
 import feat_info as fi
 import time
+import math
 import jsonutils
 import csvutils
+import numpy as np
 
 # initialize time constants assuming 30 day months
 # - 30 days x 24 hrs/day x 60 min/hr x 60 sec/min
@@ -93,6 +95,9 @@ Inputs:
   all_tips:
     all the JSON tip objects to consider for the dataset
 
+  verbose: (optional)
+    flag indicating whether verbose output should be produced
+
 Outputs:
 
   buses:
@@ -100,11 +105,11 @@ Outputs:
     and tip data (and eventually with census and economic data), a copy is made
     of the original JSON objects so that the objects in all_buses are not modified
 '''
-def gen_dataset(pdate, all_buses, all_reviews, all_tips):
-    pdate_plus_3mos  =  pdate+3*month
-    pdate_plus_6mos  =  pdate+6*month
-    pdate_plus_9mos  =  pdate+9*month
-    pdate_plus_12mos = pdate+12*month
+def gen_dataset(pdate, all_buses, all_reviews, all_tips, verbose=False):
+    pdate_plus_3mos  =  pdate+3*month # end of following year 1st quarter
+    pdate_plus_6mos  =  pdate+6*month # end of following year 2nd quarter
+    pdate_plus_9mos  =  pdate+9*month # end of following year 3rd quarter
+    pdate_plus_12mos = pdate+12*month # end of following year 4th quarter
 
     # filter businesses that were not open before pdate or closed before pdate
     # and set the class label for those that remain
@@ -112,42 +117,56 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     class_counts = [0, 0, 0, 0, 0]
     for orig_bus in all_buses:
         open_date = orig_bus.get(fi.first_review_date,None)
-        close_date = orig_bus.get(fi.last_review_date,None)
-        if ((open_date is not None) and (open_date <= pdate) and
-            (close_date is not None) and (close_date > pdate)):
+        is_open = orig_bus[fi.is_open]
+        close_date = orig_bus.get(fi.close_date,None)
+        # make sure the restaurant meets the folowing criteria:
+        # - opened on or before the prediction date
+        # - is still open or closed after the prediction date
+        if ( ((open_date is not None) and (open_date <= pdate)) and
+             (is_open or ((close_date is not None) and (close_date > pdate))) ):
             # business meets the criteria - add a copy to dictionary
             bus = orig_bus.copy()
             buses[bus[fi.business_id]]=bus
             # set class label for business
+            if (is_open or (close_date > pdate_plus_12mos)):
+                # still open 12 months after pdate
+                bus[fi.label] = fi.still_open
+                class_counts[fi.still_open] = class_counts[fi.still_open] + 1
             if ((close_date > pdate) and (close_date <= pdate_plus_3mos)):
                 # closed 0-3 months after pdate
-                bus[fi.label] = 0
-                class_counts[0] = class_counts[0] + 1
+                bus[fi.label] = fi.closed_q1
+                class_counts[fi.closed_q1] = class_counts[fi.closed_q1] + 1
             elif ((close_date > pdate_plus_3mos) and (close_date <= pdate_plus_6mos)):
                 # closed 3-6 months after pdate
-                bus[fi.label] = 1
-                class_counts[1] = class_counts[1] + 1
+                bus[fi.label] = fi.closed_q2
+                class_counts[fi.closed_q2] = class_counts[fi.closed_q2] + 1
             elif ((close_date > pdate_plus_6mos) and (close_date <= pdate_plus_9mos)):
                 # closed 6-9 months after pdate
-                bus[fi.label] = 2
-                class_counts[2] = class_counts[2] + 1
+                bus[fi.label] = fi.closed_q3
+                class_counts[fi.closed_q3] = class_counts[fi.closed_q3] + 1
             elif ((close_date > pdate_plus_9mos) and (close_date <= pdate_plus_12mos)):
                 # closed 9-12 months after pdate
-                bus[fi.label] = 3
-                class_counts[3] = class_counts[3] + 1
-            elif (close_date > pdate_plus_12mos):
-                # still open 12 months after pdate
-                bus[fi.label] = 4
-                class_counts[4] = class_counts[4] + 1
+                bus[fi.label] = fi.closed_q4
+                class_counts[fi.closed_q4] = class_counts[fi.closed_q4] + 1
     # end for
 
-    print '  number of businesses that passed date filter: %d' % len(buses.values())
-    for i in xrange(5):
-        print '    class %1d: %5d' % (i,class_counts[i])
+    if (verbose):
+        print '  number of businesses that passed date filter: %d' % len(buses.values())
+        for i in xrange(5):
+            print '    class %1d: %5d' % (i,class_counts[i])
+    # end verbose
+
+    qtr_boundary = [0,0,0,0,0]
+    qtr_boundary[0] = pdate-12*month # start of prior year 1th quarter
+    qtr_boundary[1] = pdate -9*month # start of prior year 2nd quarter
+    qtr_boundary[2] = pdate -6*month # start of prior year 3rd quarter
+    qtr_boundary[3] = pdate -3*month # start of prior year 4th quarter
+    qtr_boundary[4] = pdate          # end of prior year 4st quarter
 
     # filter reviews that do not pertain to one of the remaining businesses or
     # were not submitted before pdate
     all_rev_count = 0
+    qtr_rev_counts = [0, 0, 0, 0]
     for review in all_reviews:
         # look for the reviewed business
         bid = review[fi.business_id]
@@ -157,38 +176,74 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
         if (obj is not None):
             rdate = review[fi.date]
             if (rdate <= pdate):
-                # update review count
+                all_rev_count = all_rev_count + 1
+
+                # update overall review count
                 rcount = obj.get(fi.review_count,0)
                 obj[fi.review_count] = rcount + 1
-                # update star total
+                # update overall star total
                 stars = review.get(fi.stars,0)
                 stotal = obj.get(fi.star_total,0)
                 obj[fi.star_total] = stotal + stars
 
-                all_rev_count = all_rev_count + 1
+                # update the quarterly review counts and star totals
+                for qtr in xrange(4):
+                    if ((rdate > qtr_boundary[qtr]) and (rdate <= qtr_boundary[qtr+1])):
+                        # review submitted during this quarter
+                        qtr_rev_counts[qtr] = qtr_rev_counts[qtr] + 1
+                        # update review count for this quarter
+                        qtr_rcount = obj.get(fi.qtr_review_count[qtr],0)
+                        obj[fi.qtr_review_count[qtr]] = qtr_rcount + 1
+                        # update star total for this quarter
+                        qtr_stotal = obj.get(fi.qtr_star_total[qtr],0)
+                        obj[fi.qtr_star_total[qtr]] = qtr_stotal + stars
+                        # don't need to check the other quarters for this review
+                        break
     # end for
 
-    print '  number of reviews that passed filter: %d' % all_rev_count
+    if (verbose):
+        print '  number of reviews that passed filter: %d' % all_rev_count
+        for i in xrange(4):
+            print '    review count q%1d: %5d' % (i+1,qtr_rev_counts[i])
+    # end verbose
 
     # filter tips that do not pertain to one of the remaining businesses or
     # were not submitted before pdate
     all_tip_count = 0
+    qtr_tip_counts = [0, 0, 0, 0]
     for tip in all_tips:
         # look for the reviewed business
         bid = tip[fi.business_id]
         obj = buses.get(bid, None)
 
-        # increment tip cunt for the business
+        # update tip_count for the business
         if (obj is not None):
             tdate = tip[fi.date]
             if (tdate <= pdate):
+                all_tip_count = all_tip_count + 1
+
+                # update overall tip count
                 tcount = obj.get(fi.tip_count,0)
                 obj[fi.tip_count] = tcount + 1
 
-                all_tip_count = all_tip_count + 1
+                # update quarterly tip counts
+                for qtr in xrange(4):
+                    if ((tdate > qtr_boundary[qtr]) and (tdate <= qtr_boundary[qtr+1])):
+                        # tip submitted during this quarter
+                        qtr_tip_counts[qtr] = qtr_tip_counts[qtr] + 1
+                        # update review count for this quarter
+                        qtr_tcount = obj.get(fi.qtr_tip_count[qtr],0)
+                        obj[fi.qtr_tip_count[qtr]] = qtr_tcount + 1
+                        # don't need to check the other quarters for this tip
+                        break
+
     # end for
 
-    print '  number of tips that passed filter: %d' % all_tip_count
+    if (verbose):
+        print '  number of tips that passed filter: %d' % all_tip_count
+        for i in xrange(4):
+            print '    tip count q%1d: %5d' % (i+1,qtr_tip_counts[i])
+    # end verbose
 
     # add census data
     # TBD
@@ -196,15 +251,51 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     # add economic data
     # TBD
 
-    # calculate average star ranking and remove unneeded attributes
+    # calculate average star ratings, percent changes and remove unneeded attributes
     for bus in buses.values():
-        # get review count and star total
+        # get overall review count
         rcount = bus.get(fi.review_count,0)
-        stotal = bus.get(fi.star_total,0)
 
-        # calculate average star rating
+        # calculate overall average star rating
         if (rcount > 0):
+            # get overall star total
+            stotal = bus.get(fi.star_total,0)
+            # calculate overall average star rating
             bus[fi.avg_star_rating] = float(stotal)/float(rcount)
+
+        # calculate quarterly average star rating and quarterly percent changes
+        for qtr in xrange(4):
+            # calculate quarterly average star rating
+            qtr_rcount = bus.get(fi.qtr_review_count[qtr],0)
+            if (qtr_rcount > 0):
+                qtr_stotal = bus.get(fi.qtr_star_total[qtr],0)
+                bus[fi.qtr_avg_star_rating[qtr]] = float(qtr_stotal)/float(qtr_rcount)
+
+            # calculate percent change for quarterly review counts, tip counts,
+            # star total and average star ratings
+            # - the average star ratings are calculated in this loop, so the
+            #   next quarter value is not available during this iteration
+            # - calculate using previous quarter and current quarter, so skip
+            #   first iteration so a previous value is available for avg star rating
+            if (qtr > 0):
+                # quarterly review count percent change
+                prev_qtr_rcount = bus.get(fi.qtr_review_count[qtr-1],0)
+                bus[fi.qtr_review_count_pc[qtr-1]] = pct_change(prev_qtr_rcount, qtr_rcount)
+
+                # quarterly tip count percent change
+                qtr_tcount = bus.get(fi.qtr_tip_count[qtr],0)
+                prev_qtr_tcount = bus.get(fi.qtr_tip_count[qtr-1],0)
+                bus[fi.qtr_tip_count_pc[qtr-1]] = pct_change(prev_qtr_tcount, qtr_tcount)
+
+                # quarterly star total percent change
+                qtr_st = bus.get(fi.qtr_star_total[qtr],0)
+                prev_qtr_st = bus.get(fi.qtr_star_total[qtr-1],0)
+                bus[fi.qtr_star_total_pc[qtr-1]] = pct_change(prev_qtr_st, qtr_st)
+
+                # quarterly average star rating percent change
+                qtr_asr = bus.get(fi.qtr_avg_star_rating[qtr],0)
+                prev_qtr_asr = bus.get(fi.qtr_avg_star_rating[qtr-1],0)
+                bus[fi.qtr_avg_star_rating_pc[qtr-1]] = pct_change(prev_qtr_asr, qtr_asr)
 
         # filter out unneeded attributes
         jsonutils.filter_dict(bus, fi.data_feat_names, copy=False)
@@ -357,8 +448,8 @@ def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
                 # append this review to the list of reviews
                 reviews.append(review)
                 # process review dates
-                review_date = str2date(review[fi.date])
-                review[fi.date] = date2int(review_date)
+                review_date = date2int(str2date(review[fi.date]))
+                review[fi.date] = review_date
                 # process first and last review/tip dates
                 current_first = first_review_dates[bid]
                 current_last = last_review_dates[bid]
@@ -388,8 +479,8 @@ def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
                 # append this tip to the list of tips
                 tips.append(tip)
                 # process tip dates
-                tip_date = str2date(tip[fi.date])
-                tip[fi.date] = date2int(tip_date)
+                tip_date = date2int(str2date(tip[fi.date]))
+                tip[fi.date] = tip_date
                 # process first and last review/tip dates
                 current_first = first_review_dates[bid]
                 current_last = last_review_dates[bid]
@@ -408,11 +499,14 @@ def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
         bid = bus[fi.business_id]
         first_review_date = first_review_dates[bid]
         last_review_date = last_review_dates[bid]
+        is_closed = not bus[fi.is_open]
         tract = census_tracts[bid]
         if (first_review_date is not None):
-            bus[fi.first_review_date] = date2int(first_review_date)
+            bus[fi.first_review_date] = first_review_date
         if (last_review_date is not None):
-            bus[fi.last_review_date] = date2int(last_review_date)
+            bus[fi.last_review_date] = last_review_date
+            if (is_closed):
+                bus[fi.close_date] = last_review_date
         if (tract is not None):
             bus[fi.census_tract] = tract
 
@@ -455,3 +549,16 @@ def date2int(d):
 
 def int2date(secs):
     return time.localtime(secs)
+
+# ==================================================
+# Math functions
+# ==================================================
+def pct_change(old_val, new_val):
+    if (np.allclose(old_val,new_val)):
+        return 0
+    elif (not np.allclose(old_val,0)):
+        return float(new_val - old_val)/float(old_val)
+    elif (not np.allclose(new_val,0)):
+        return math.log(new_val) # - math.log(1)
+    else:
+        return 0.0
