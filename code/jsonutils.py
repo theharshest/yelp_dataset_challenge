@@ -280,6 +280,10 @@ def json2xy(json, column_info, label_attr, std=True):
     # create the example attributes matrix
     X = data[:,X_idx]
     if (std):
+        # if a column contains all the same value then zscore will return nan
+        # - add small amount of random noise to the matrix
+        X = X + np.random.normal(0,0.0001,X.shape)
+        # calculate zscores for the augmented elements in the array
         X = stats.zscore(X,axis=0)
 
     # return the result
