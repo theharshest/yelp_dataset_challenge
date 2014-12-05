@@ -61,7 +61,7 @@ def run_script(busjson, revjson, tipjson, init_pdate, delta):
     c = svm.LinearSVC()
 
     # configure parameter grid for grid search
-    param_grid = {'C': [1, 10, 100, 1000]}
+    param_grid = {'C': [0.1, 1, 10, 100, 1000]}
 
     # run the walk-forward cross validation and collect the results
     print('run walk-forward cross validation...')
