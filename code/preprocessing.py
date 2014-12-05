@@ -1,6 +1,6 @@
 import replacers
 
-def common_preprocessing(text):
+def preprocessing_common(text):
 	'''
 	Includes common preprocessing tasks on text data -
 	lowercasing, term expansion, spelling correction, repeated chars removal
@@ -26,4 +26,3 @@ def common_preprocessing(text):
 	text = ' '.join(tokens)
 
 	return text
-
