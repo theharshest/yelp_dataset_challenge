@@ -95,6 +95,9 @@ Inputs:
   all_tips:
     all the JSON tip objects to consider for the dataset
 
+  verbose: (optional)
+    flag indicating whether verbose output should be produced
+
 Outputs:
 
   buses:
@@ -102,7 +105,7 @@ Outputs:
     and tip data (and eventually with census and economic data), a copy is made
     of the original JSON objects so that the objects in all_buses are not modified
 '''
-def gen_dataset(pdate, all_buses, all_reviews, all_tips):
+def gen_dataset(pdate, all_buses, all_reviews, all_tips, verbose=False):
     pdate_plus_3mos  =  pdate+3*month # end of following year 1st quarter
     pdate_plus_6mos  =  pdate+6*month # end of following year 2nd quarter
     pdate_plus_9mos  =  pdate+9*month # end of following year 3rd quarter
@@ -147,9 +150,11 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
                 class_counts[fi.closed_q4] = class_counts[fi.closed_q4] + 1
     # end for
 
-    print '  number of businesses that passed date filter: %d' % len(buses.values())
-    for i in xrange(5):
-        print '    class %1d: %5d' % (i,class_counts[i])
+    if (verbose):
+        print '  number of businesses that passed date filter: %d' % len(buses.values())
+        for i in xrange(5):
+            print '    class %1d: %5d' % (i,class_counts[i])
+    # end verbose
 
     qtr_boundary = [0,0,0,0,0]
     qtr_boundary[0] = pdate-12*month # start of prior year 1th quarter
@@ -196,9 +201,11 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
                         break
     # end for
 
-    print '  number of reviews that passed filter: %d' % all_rev_count
-    for i in xrange(4):
-        print '    review count q%1d: %5d' % (i+1,qtr_rev_counts[i])
+    if (verbose):
+        print '  number of reviews that passed filter: %d' % all_rev_count
+        for i in xrange(4):
+            print '    review count q%1d: %5d' % (i+1,qtr_rev_counts[i])
+    # end verbose
 
     # filter tips that do not pertain to one of the remaining businesses or
     # were not submitted before pdate
@@ -232,9 +239,11 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
 
     # end for
 
-    print '  number of tips that passed filter: %d' % all_tip_count
-    for i in xrange(4):
-        print '    tip count q%1d: %5d' % (i+1,qtr_tip_counts[i])
+    if (verbose):
+        print '  number of tips that passed filter: %d' % all_tip_count
+        for i in xrange(4):
+            print '    tip count q%1d: %5d' % (i+1,qtr_tip_counts[i])
+    # end verbose
 
     # add census data
     # TBD
