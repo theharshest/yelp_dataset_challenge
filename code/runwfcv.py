@@ -3,9 +3,9 @@
 Script used to run "walk forward cross validation".
 
 Arguments:
-  busjson  - path to the file where filtered business data should be written
-  revjson  - path to the file where filtered review data should be written
-  tipjson  - path to the file where filtered tip data should be written
+  busjson  - path to the file where filtered business data is stored
+  revjson  - path to the file where filtered review data is stored
+  tipjson  - path to the file where filtered tip data is stored
   pdate    - the initial prediction date to use for walking forward
   delta    - the number of months between training prediction date and test
              prediction date (the size of the steps)
@@ -22,23 +22,28 @@ import numpy as np
 import wfcvutils
 import sklearn.svm as svm
 import sklearn.metrics as metrics
-import sys
+import argparse
 
 def main():
-    if (len(sys.argv) < 6):
-        usage(sys.argv)
-        return
+    desc = 'Run walk-forward cross-validation using the specified initial prediction date and delta'
+    parser = argparse.ArgumentParser(description=desc)
+    parser.add_argument('busjson', help='path to the file where filtered business data is stored')
+    parser.add_argument('revjson', help='path to the file where filtered review data is stored')
+    parser.add_argument('tipjson', help='path to the file where filtered tip data is stored')
+    parser.add_argument('pdate', help='the initial prediction date to use for walking forward')
+    parser.add_argument('delta', type=int, help='the number of months between training prediction date and testprediction date (the size of the steps)')
+    parser.add_argument('-nus', help='this flag turns off under-sampling for the still open class',
+                        action='store_true')
+    parser.add_argument('-rbf', help='this flag causes an RBF SVM to be used instead of a linear SVM',
+                        action='store_true')
 
-    busjson    = sys.argv[1]
-    revjson    = sys.argv[2]
-    tipjson    = sys.argv[3]
-    init_pdate = sys.argv[4]
-    delta      = int(sys.argv[5])
+    args = parser.parse_args()
 
-    run_script(busjson, revjson, tipjson, init_pdate, delta)
+    run_script(args.busjson, args.revjson, args.tipjson, args.pdate, args.delta,
+               usamp=(not args.nus), rbf=args.rbf)
 # end main
 
-def run_script(busjson, revjson, tipjson, init_pdate, delta):
+def run_script(busjson, revjson, tipjson, init_pdate, delta, usamp=True, rbf=False):
     print 'Initial prediction date: %s' % init_pdate
     print 'Time delta: %d months' % delta
 
@@ -57,16 +62,28 @@ def run_script(busjson, revjson, tipjson, init_pdate, delta):
     print 'loading tip objects from %s...' % tipjson
     all_tips, junk = ju.load_objects(tipjson)
     
-    # create classifier to test
-    c = svm.LinearSVC()
-
-    # configure parameter grid for grid search
-    param_grid = {'C': [0.1, 1, 10, 100, 1000]}
+    if (rbf):
+        print 'using RBF SVM...'
+        # create RBF SVM to test
+        c = svm.NuSVC()
+        # configure parameter grid for grid search
+        param_grid = {'gamma': [0.1, 0.01, 0.001, 0.0001],
+                      'kernel': ['rbf']}
+    else:
+        print 'using linear SVM...'
+        # create linear SVM to test
+        c = svm.LinearSVC()
+        # configure parameter grid for grid search
+        param_grid = {'C': [0.1, 1, 10, 100, 1000]}
 
     # run the walk-forward cross validation and collect the results
     print('run walk-forward cross validation...')
+    if (usamp):
+        print('  under-sampling still open class...')
+    else:
+        print('  NOT under-sampling still open class...')
     results = wfcvutils.wfcv(c, param_grid, all_buses, all_reviews, all_tips,
-                             pdate, delta*du.month)
+                             pdate, delta*du.month, usamp=usamp)
     
     # combine the results to produce overall metrics
     y_true = None
@@ -88,10 +105,6 @@ def run_script(busjson, revjson, tipjson, init_pdate, delta):
     else:
         print '  NO RESULTS\n'
 # end run_script
-
-def usage(argv):
-    print 'Usage: %s <busjson> <revjson> <tipjson> <pdate> <delta>' % argv[0]
-# end usage
 
 # run main method when this file is run from command line
 if __name__ == "__main__":
