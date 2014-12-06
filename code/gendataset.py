@@ -5,9 +5,9 @@ date.
 
 Arguments:
   pdate    - the prediction date to use for generating the data set
-  busjson  - path to the file where filtered business data should be written
-  revjson  - path to the file where filtered review data should be written
-  tipjson  - path to the file where filtered tip data should be written
+  busjson  - path to the file where filtered business data is stored
+  revjson  - path to the file where filtered review data is stored
+  tipjson  - path to the file where filtered tip data is stored
   outfile  - path to the file where the generated data set should be written
 
 Created on Wed Dec  3 23:00:59 2014
@@ -17,20 +17,20 @@ Created on Wed Dec  3 23:00:59 2014
 
 import jsonutils as ju
 import datautils as du
-import sys
+import argparse
 
 def main():
-    if (len(sys.argv) < 5):
-        usage(sys.argv)
-        return
+    desc = 'Generate a dataset using data that was available prior to a specified prediction date'
+    parser = argparse.ArgumentParser(description=desc)
+    parser.add_argument('pdate', help='the prediction date to use for generating the data set')
+    parser.add_argument('busjson', help='path to the file where filtered business data is stored')
+    parser.add_argument('revjson', help='path to the file where filtered review data is stored')
+    parser.add_argument('tipjson', help='path to the file where filtered tip data is stored')
+    parser.add_argument('outfile', help='path to the file where the generated data set should be written')
 
-    pdate   = sys.argv[1]
-    busjson = sys.argv[2]
-    revjson = sys.argv[3]
-    tipjson = sys.argv[4]
-    outfile = sys.argv[5]
+    args = parser.parse_args()
 
-    run_script(pdate, busjson, revjson, tipjson, outfile)
+    run_script(args.pdate, args.busjson, args.revjson, args.tipjson, args.outfile)
 # end main
 
 def run_script(pdate_str, busjson, revjson, tipjson, outfile):
