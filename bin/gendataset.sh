@@ -19,7 +19,7 @@ CODE=$BIN/../code
 PDATE=$1
 OUTFILE=$2
 
-# run the python script to execute walk forward cross validation
+# run the python script to generate a data set
 # assumption: the python script is in the $CODE directory
 # assumption: the data files are in the $DATA directory
 python $CODE/gendataset.py $PDATE $DATA/business.json $DATA/review.json $DATA/tip.json $OUTFILE
