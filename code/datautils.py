@@ -262,7 +262,8 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips, verbose=False, usamp=Tr
         target_size = np.max(class_counts[fi.closed_q1:fi.closed_q4])
         # calculate the percentage of "still open" records that should be kept
         weight = float(target_size)/float(class_counts[fi.still_open])
-        print '  weight for undersampling: %5.3f' % weight
+        if (verbose):
+            print '  weight for undersampling: %5.3f' % weight
         # reset class count for "still open" class
         class_counts[fi.still_open] = 0
 
