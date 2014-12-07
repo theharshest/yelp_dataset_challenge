@@ -364,12 +364,12 @@ Inputs:
   out_tipjson
     the path to the file where the filtered JSON tip objects will be written
 
-  in_censuscsv
-    the path to the CSV file containing cencus tracts for businesses
+  in_demoeconcsv
+    the path to the CSV file containing demographic and economic data for businesses
 
 '''
 def filter_yelp_data(in_busjson, out_busjson, in_revjson, out_revjson,
-                     in_tipjson, out_tipjson, in_censuscsv):
+                     in_tipjson, out_tipjson, in_demoeconcsv):
     # initialize the column names
     #feat_columns = feat_info.data_feat_names
     bus_feats = fi.bus_feat_names
@@ -387,7 +387,7 @@ def filter_yelp_data(in_busjson, out_busjson, in_revjson, out_revjson,
     # load the review and tip objects and add first/last review/tip date
     # and census tract to objects
     objects,reviews,tips = process_review_tip_census_data(in_revjson, in_tipjson,
-                                                          in_censuscsv, objects)
+                                                          in_demoeconcsv, objects)
     
     # create feature matrix
     #feat_mat, columns = get_feature_matrix(objects, feat_columns)
@@ -421,8 +421,8 @@ Inputs:
   in_tipjson:
     the path to the file containing JSON tip objects
 
-  in_censuscsv:
-    the path to the CSV file containing cencus tracts for businesses
+  in_demoeconcsv:
+    the path to the CSV file containing demographic and economic data for businesses
 
   buses
     a list of dictionaties with each dictionary representing a business
@@ -431,7 +431,7 @@ Outputs:
 
   buses
     the list of business objects with each business object augmented with its
-    last review date and census tract
+    first and last review dates and demographic and economic data
 
   reviews
     the list of reviews that were written for one of the businesses identified
@@ -441,34 +441,33 @@ Outputs:
     the list of tips that were written for one of the businesses identified
     in the list of businesses passed as input
 '''
-def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
+def process_review_tip_census_data(in_revjson, in_tipjson, in_demoeconcsv, buses):
     # load the census tracts
-    print 'loading census tracts from %s...' % in_censuscsv
-    census_data = csvutils.load_matrix(in_censuscsv,False)
+    print 'loading demographic and economic data from %s...' % in_demoeconcsv
+    demo_econ_data = csvutils.load_matrix(in_demoeconcsv,False)
 
-    # initialize  dictionaries to hold the last review dates and census tract
+    # initialize  dictionaries to hold the first and last review dates and
+    # add lookup data for demo & econ data
     print 'initialize dictionaries...'
     first_review_dates = {}
     last_review_dates = {}
-    census_tracts = {}
+    demo_econ_lookup = {}
     for bus in buses:
-        bid = bus[fi.business_id]
         # add the business IDs for restaurants to the dictionaries
+        bid = bus[fi.business_id]
         first_review_dates[bid] = None
         last_review_dates[bid] = None
-        census_tracts[bid] = None
+        demo_econ_lookup[bid] = -1
 
-    # populate census tract data
-    print 'processing census tracts...'
-    for i in xrange(census_data.shape[0]):
-        bid = census_data[i,0]
-        tract = census_data[i,1]
-        # add census tract
-        if (tract): # is tract is not the empty string
-            census_tracts[bid] = tract
+    # initialize lookup table for demo and econ data
+    print 'initialize lookup table for demographic and economic data...'
+    for i in xrange(demo_econ_data.shape[0]):
+        bid = demo_econ_data[i,fi.census_bus_id_idx]
+        if (bid):
+            demo_econ_lookup[bid] = i
 
     # collect the reviews that were written for one of the businesses in the list
-    # of businesses add identify the first/last review/tip dates for each business
+    # of businesses and identify the first/last review/tip dates for each business
     reviews = []
     print 'processing reviews from %s...' % in_revjson
     with open(in_revjson, 'r') as fin:
@@ -499,7 +498,7 @@ def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
                     last_review_dates[bid] = review_date
 
     # collect the tips that were written for one of the businesses in the list
-    # of businesses add update the first/last review/tip dates for each business
+    # of businesses and update the first/last review/tip dates for each business
     tips = []
     print 'processing tips from %s...' % in_tipjson
     with open(in_tipjson, 'r') as fin:
@@ -536,18 +535,41 @@ def process_review_tip_census_data(in_revjson, in_tipjson, in_censuscsv, buses):
         first_review_date = first_review_dates[bid]
         last_review_date = last_review_dates[bid]
         is_closed = not bus[fi.is_open]
-        tract = census_tracts[bid]
+        demo_econ_idx = demo_econ_lookup[bid]
         if (first_review_date is not None):
             bus[fi.first_review_date] = first_review_date
         if (last_review_date is not None):
             bus[fi.last_review_date] = last_review_date
             if (is_closed):
                 bus[fi.close_date] = last_review_date
-        if (tract is not None):
-            bus[fi.census_tract] = tract
+        if (demo_econ_idx >= 0):
+            add_demo_econ_data(bus, demo_econ_data[demo_econ_idx,:])
 
     # return the augmented business objects, list of reviews and list of tips
     return buses, reviews, tips
+
+'''
+Add the demographic and economic data contained in the supplied vector
+to the business object
+'''
+def add_demo_econ_data(bus, demo_econ_data):
+    # add the demo & econ data to the business object
+    bus[fi.census_tract]    = demo_econ_data[fi.census_tract_idx]
+    bus[fi.income]          = demo_econ_data[fi.income_idx]
+    bus[fi.census_pop]      = demo_econ_data[fi.census_pop_idx]
+    bus[fi.census_black]    = demo_econ_data[fi.census_black_idx]
+    bus[fi.census_young]    = demo_econ_data[fi.census_young_idx]
+    bus[fi.census_old]      = demo_econ_data[fi.census_old_idx]
+    bus[fi.competitors]     = demo_econ_data[fi.competitors_idx]
+    bus[fi.competitors_pc]  = demo_econ_data[fi.competitors_pc_idx]
+    bus[fi.census_black_pc] = demo_econ_data[fi.census_black_pc_idx]
+    bus[fi.census_young_pc] = demo_econ_data[fi.census_young_pc_idx]
+    bus[fi.census_old_pc]   = demo_econ_data[fi.census_old_pc_idx]
+    bus[fi.income_pc]       = demo_econ_data[fi.income_pc_idx]
+    bus[fi.income_group]    = demo_econ_data[fi.income_group_idx]
+
+    return bus
+# end add_demo_econ_data
 
 # ==================================================
 # Functions to load JSON objects from JSON files

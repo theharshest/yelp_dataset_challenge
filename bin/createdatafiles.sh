@@ -19,5 +19,5 @@ CODE=$BIN/../code
 # run the python script to create the data files
 # assumption: the python script is in the $CODE directory
 # assumption: the yelp academic dataset files are in the $DATA directory
-python $CODE/createdatafiles.py $DATA/yelp_academic_dataset_business.json $DATA/business.json $DATA/yelp_academic_dataset_review.json $DATA/review.json $DATA/yelp_academic_dataset_tip.json $DATA/tip.json $DATA/business_tracts.csv
+python $CODE/createdatafiles.py $DATA/yelp_academic_dataset_business.json $DATA/business.json $DATA/yelp_academic_dataset_review.json $DATA/review.json $DATA/yelp_academic_dataset_tip.json $DATA/tip.json $DATA/business_demo_info.csv
 
