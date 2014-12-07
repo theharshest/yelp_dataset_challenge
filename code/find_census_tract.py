@@ -31,7 +31,7 @@ dataWriter = csv.writer(open('../data/business_tracts.csv', 'w'), delimiter=',')
 num = len(column['business_id'])
 print num
 for i in range(0,num):
-  url = "http://data.fcc.gov/api/block/2010/find?latitude={lat}&longitude={lon}".format(lat=column['latitude'][i], lon=column['longitude'][i])
+  url = "http://data.fcc.gov/api/block/2000/find?latitude={lat}&longitude={lon}".format(lat=column['latitude'][i], lon=column['longitude'][i])
   request = Request(url)
   response = urlopen(request)
   tree = etree.fromstring(response.read())
