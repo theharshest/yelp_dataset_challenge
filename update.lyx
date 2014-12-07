@@ -3,6 +3,9 @@
 \begin_document
 \begin_header
 \textclass article
+\begin_preamble
+
+\end_preamble
 \use_default_options true
 \maintain_unincluded_children false
 \language english
@@ -39,8 +42,8 @@
 \use_package stackrel 1
 \use_package stmaryrd 1
 \use_package undertilde 1
-\cite_engine natbib
-\cite_engine_type authoryear
+\cite_engine basic
+\cite_engine_type default
 \biblio_style plain
 \use_bibtopic false
 \use_indices false
@@ -81,10 +84,6 @@ Using Yelp to Predict Restaurant Closings
 Harsh Jha, John Maloney and Dominic Smith
 \end_layout
 
-\begin_layout Section
-Introduction
-\end_layout
-
 \begin_layout Standard
 The task of our project remains the same as in the proposal.
  Given some date 
@@ -108,6 +107,13 @@ The task of our project remains the same as in the proposal.
 \end_inset
 
 .
+ For our analysis we have measures of restaurant quality, attention, and
+ competition from Yelp as well as demographic information about the surrounding
+ area from the U.S.
+ Census.
+ We are interested in both how well we can predict closings of individual
+ businesses and how well we can predict how many businesses will close in
+ some area.
 \end_layout
 
 \begin_layout Section
@@ -126,7 +132,7 @@ Downloaded from http://www.yelp.com/dataset_challenge
 
 \end_inset
 
- We have restricted this sample to 12k restaurants operating in either Phoenix,
+ We have restricted this sample to 13k restaurants operating in either Phoenix,
  Las Vegas, or Madison.
  These data contain descriptive attributes and user reviews for each restaurant.
  The user reviews include textual comments and star ratings provided by
@@ -145,6 +151,17 @@ Downloaded from American Fact Finder at the Census Tract level.
 
  These data contain data on the income level, ethnic composition, and population
  of an area.
+ The area of the data is the Census Tract which divisions of the U.S.
+ that contain between 1,200 and 8,000 people.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+See https://www.census.gov/geo/reference/gtc/gtc_ct.html for more information.
+\end_layout
+
+\end_inset
+
  The final data are from the Local Area Unemployment Statistics published
  by the Bureau of Labor Statistics (BLS).
  They contain monthly unemployment rates at the city level.
@@ -165,8 +182,9 @@ Downloaded from http://www.bls.gov/lau/#data
  Data from the Census allow us to control for whether a restaurant is in
  an area where it should do well.
  For example, high priced restaurants should do better in high income areas.
- Data from the BLS allow us to control for aggregate economic conditions
- which make all restaurants more or less likely to close.
+ Data from the Bureau of Labor Statistics (BLS) allow us to control for
+ aggregate economic conditions which make all restaurants more or less likely
+ to close.
 \end_layout
 
 \begin_layout Standard
@@ -178,7 +196,7 @@ At this point we have downloaded all data we need from Yelp and the Census
  based on the date of the restaurant's final review.
  We currently have code running to preprocess the review text
 \begin_inset CommandInset citation
-LatexCommand citet
+LatexCommand citep
 key "Perkins2010NLTK2CB"
 
 \end_inset
@@ -218,9 +236,9 @@ Methods
 \end_layout
 
 \begin_layout Standard
-The Yelp data cover 2004-2014.
- Our initial plan is to select a date near the middle of the sample to serve
- as the prediction date.
+The Yelp data cover 2005-2014.
+ Stashed changes Our initial plan is to select a date near the middle of
+ the sample to serve as the prediction date.
  We will then use only information available on that date (reviews, unemployment
  statistics, etc) to fit our model.
  Our class labels will be based on how long a restaurant remains open after
@@ -289,14 +307,12 @@ Issues
 \begin_layout Standard
 Our main issue so far has been the amount of time preprocessing the review
  data has taken to run.
+ We are also looking into Map Reduce (mrjob) as a way to decrease processing
+ time.
  We expect that our sentiment analysis program will run for a long time
- before providing results.
- We are investigating the possible use of map-reduce techniques to improve
+ so we are investigating the possible use of map-reduce techniques to improve
  the performance of sentiment analysis.
-\end_layout
-
-\begin_layout Standard
-Another potential issue is the calculation of similarity between restaurants.
+ Another potential issue is the calculation of similarity between restaurants.
  The vast majority of the descriptive attributes available in the Yelp data
  set are categories to which a restaurant can be assigned.
  These categories have been mapped to binary attributes indicating whether
@@ -315,9 +331,26 @@ Another potential issue is the calculation of similarity between restaurants.
  a smaller number of nominal and continuous attributes.
  Selecting a similarity measure that is effective for such a mixed data
  set could prove to be difficult.
+ Once the preprocessing is finished we have a sentiment analysis classifier
+ already training using the Restaurant Reviews training data provided by
+ SemEval 2014.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Downloaded from http://metashare.ilsp.gr/
 \end_layout
 
-\begin_layout Standard
+\end_inset
+
+ The first sentiment analysis classifier we will use is LinearSVM.
+\begin_inset CommandInset citation
+LatexCommand nocite
+key "Python"
+
+\end_inset
+
+ 
 \begin_inset CommandInset bibtex
 LatexCommand bibtex
 bibfiles "literature"
