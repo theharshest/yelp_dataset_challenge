@@ -176,7 +176,19 @@ bus_feat_info = {business_id:(str,'MISSING'),
                  first_review_date:(int,-1),
                  last_review_date:(int,-1),
                  close_date:(int,-1),
-                 census_tract:(int,-1)}
+                 census_tract:(int,-1),
+                 income:(float,-1.0),
+                 census_pop:(float,-1.0),
+                 census_black:(float,-1.0),
+                 census_young:(float,-1.0),
+                 census_old:(float,-1.0),
+                 competitors:(int,-1),
+                 competitors_pc:(float,-1.0),
+                 census_black_pc:(float,-1.0),
+                 census_young_pc:(float,-1.0),
+                 census_old_pc:(float,-1.0),
+                 income_pc:(float,-1.0),
+                 income_group:(int,-1)}
 
 bus_feat_names = bus_feat_info.keys()
 
