@@ -82,6 +82,8 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_del
     # generate the first data set
     buses_test = du.gen_dataset(pdate, all_buses, all_reviews, all_tips, usamp=usamp)    
     X_test,y_test = ju.json2xy(buses_test, fi.data_feat_info, fi.label)
+    
+    print('Number of attributes in data set: %d' % X_test.shape[1])
 
     # initialize the stop_date threshold
     stop_date = end_date - 2*time_delta
