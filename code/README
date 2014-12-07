@@ -1,0 +1,81 @@
+The code directory contains the following files:
+
+  createdatafiles.py - pyton script to create filtered versions of the Yelp! academic dataset files
+  csvutils.py - python module containing utility functions for working with CSV files
+  datautils.py - python module containing utility functions for working with the Yelp! academic dataset files
+  feat_info.py - python module containing variables used for handling attribute in the Yelp! academic dataset files
+  find_census_tract.py - python script to write the business_tracts.csv file
+  gendataset.py - python script to generate data sets for a specified prediction date and write them to file
+  jsonutils.py - python module containing utility functions for working with JSON objects & files
+  preprocessing.py - uses replacers.py to lowercase and normalize text
+  README - this readme file
+  replacers.py - module used by preprocessing, contains helper functions to normalize text
+  runwfcv.py - python script to run "walk-forward cross validation"
+  wfcvutils.py - python module containing utility functions for doing "walk forward cross validation"
+  preprocessing.py - module having text preprocessing utility, used by sentiment classifier
+  sentiment_classifier.py - script to generate sentiment scores using reviews text and tips text
+
+To run "walk forward cross validation" do the following:
+
+  1. Follow the instructions in the data/README to recreate the base JSON data files
+  
+  2. Execute the runwfcv.sh script as follows (assume that BIN references the <gitrepo>/bin directory,
+     PDATE is the initial prediction date in YYYY-MM-DD format and MONTHS is the time delta between
+     prediction dates expressed as an integer number of months):
+
+       $ $BIN/runwfcv.sh $PDATE $MONTHS  
+
+To generate a data set for a specified prediction date do the following:
+
+  1. Follow the instructions in the data/README to recreate the base JSON data files
+  
+  2. Execute the gendataset.sh script as follows (assume that BIN references the <gitrepo>/bin directory,
+     PDATE is the initial prediction date in YYYY-MM-DD format and OUTFILE is the name of the file
+     where the resulting data set should be written):
+
+       $ $BIN/gendataset.sh $PDATE $OUTFILE
+
+The resulting data set will include the following attributes:
+    (naming conventions for attribute names:
+       py_qN - the value is for quarter N of the year prior to the prediction date
+       %c_py_qN_qM - percent change from prior year quarter N to prior year quarter M)
+
+    avg_star_rating
+    avg_star_rating_%c_py_q1_q2
+    avg_star_rating_%c_py_q2_q3
+    avg_star_rating_%c_py_q3_q4
+    avg_star_rating_py_q1
+    avg_star_rating_py_q2
+    avg_star_rating_py_q3
+    avg_star_rating_py_q4
+    label
+    review_count
+    review_count_%c_py_q1_q2
+    review_count_%c_py_q2_q3
+    review_count_%c_py_q3_q4
+    review_count_py_q1
+    review_count_py_q2
+    review_count_py_q3
+    review_count_py_q4
+    star_total
+    star_total_pc_py_q1_q2
+    star_total_pc_py_q2_q3
+    star_total_pc_py_q3_q4
+    star_total_py_q1
+    star_total_py_q2
+    star_total_py_q3
+    star_total_py_q4
+    tip_count
+    tip_count_%c_py_q1_q2
+    tip_count_%c_py_q2_q3
+    tip_count_%c_py_q3_q4
+    tip_count_py_q1
+    tip_count_py_q2
+    tip_count_py_q3
+    tip_count_py_q4
+
+To convert a JSON file into a CSV file do the following:
+
+   1. Execute the json2csv.sh script as follows:
+
+        $ $BIN/json2csv.sh <jsonfile> <csvfile>

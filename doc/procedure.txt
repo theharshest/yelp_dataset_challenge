@@ -1,0 +1,134 @@
+CONTENT OF TRAINING AND TEST DATA SETS
+
+Datasets that will be generated for each round of cross validation.  The training and test sets will have similar content except that a different "prediction date" will be used to calculate the date dependent attributes.
+
+Given a "prediction date" D, the samples will include the following attributes:
+  attributes that are dependent on D
+  - average star rating calculated using reviews submited before D
+  - number of reviews submitted before D
+  - number of tips submitted before D
+  - sentiment rating calculated using reviews submitted before D
+  - economic data available on D
+  attributes that are NOT dependent on D
+  - yelp attributes (ambiance, attire, price range, etc)
+  - yelp categories (food type, location type)
+  - census data (population, etc)
+
+The class label for each restaurant will be calculated based on the "prediction date" D:
+  - Closed 0-3 months after D
+  - Closed 3-6 months after D
+  - Closed 6-9 months after D
+  - Closed 9-12 months after D
+  - Still open 12 months after D
+
+BASE DATA USED TO GENERATE TRAINING AND TEST DATA SETS
+
+To support generating these data sets, the following base data sets will be available:
+
+  restaurant_data.csv - includes the following attributes
+  - business_id
+  - first_review_date - used to estimate when the restaurant opened
+  - last_review_date - used to estimate whe the restaurant closed
+  - census_tract - links to the applicable census and economic data
+  - attributes (many columns) - non time dependent attributes
+  - categories (many columns) - non time dependent categories
+
+  review_data.csv - includes the following attributes
+  - review_id
+  - business_id
+  - user_id - could be used to link to weighting information
+  - review_date - the date on which the review was submitted
+  - stars - number of stars assigned by the reviewer
+  - sentiment - potentially many columns derived from sentiment analysis performed on the review text
+
+  tip_data.csv - includes the following attributes
+  - business_id
+  - user_id - could be used to link to weighting information
+  - tip_date the date on which the tip was submitted
+  - likes - could be used as a weighting factor?
+
+  economic_data.csv - includes the following attributes
+  - period - the time period to which the data applies
+  - census_tract - identifies the census tract to which the data applies
+  - economic information - potentially many columns (unemployement, median incme, etc)
+
+  census_data.csv - includes the following attributes
+  - census_tract - identifier for the census tract
+  - demographic information - potentially many columns (population, etc)
+
+GENERATING TRAINING AND TEST DATA SETS
+
+Given a "prediction date" D, the required samples and class labels will be generated as
+follows.  This procedure can be used to generate both training data sets and test data sets.
+
+  1. Load restaurant_data.csv
+  2. Filter the data to eliminate restaurant that don't meet the following criteria:
+     - first_review_date <= D (restaurant opened on or before D)
+     - last_review_date >= D (restaurnat wasn't already closed on D)
+  3. Eliminate columns for attributes that will not be used (filter out the noise)
+  4. Calculate a label for each restaurant:
+     - Assign label 0 if D < last_review_date <= D+3mos
+     - Assign label 1 if D+3mos < last_review_date <= D+6mos
+     - Assign label 2 if D+6mos < last_review_date <= D+9mos
+     - Assign label 3 if D+9mos < last_review_date <= D+12mos
+     - Assign label 4 if D+12mos < last_review_date
+  5. Load review_data.csv
+  6. Filter the data to eliminate reviews that don't meet the following criterion:
+     - review_date <= D
+  7. Calculate the following attributes with the remaining review data:
+     - number of reviews for each restaurant
+     - average star rating for each restaurant
+       - calculated as the (sum of stars awarded to the restaurant)/(number of reviews for restaurant)
+     - average sentiment ranking for each restaurant (may be multiple sentiment columns)
+  8. Load tip_data.csv
+  9. Filter the data to eliminate tips that don't meet the following criterion:
+     - tip_date <= D
+ 10. Calculate the following attributes with the remaining tip data:
+     - number of tips for each restaurant
+ 11. Load economic_data.csv
+ 12. Filter the data to eliminate records that don't meet the following criteria:
+     - time period includes D
+ 13. Use census_tract identifier to identify the economic data that goes with each restaurant
+ 14. Load census_data.csv
+ 15. Use census_tract identifier to identify the census data that goes with each restaurant
+ 16. Generate a data set with one row per restaurant and the following columns:
+     - business_id
+     - class label
+     - yelp attributes (ambiance, attire, price range, etc)
+     - yelp categories (food type, location type)
+     - number of reviews
+     - average star rating
+     - average sentiment ranking - potentially multiple columns
+     - number of tips
+     - economic data - potentially multiple columns
+     - census data - potentially multiple columns
+
+We can either generate the data sets ahead of time and save them in files to be loaded.  Or generate the data sets on demand as they are needed.
+
+CROSS-VALIDATION PROCEDURE
+
+Each classifier will be tested using the following cross-validation procedure:
+
+   1. Choose a value for T.  This will determine the gap between the training prediction
+      date and the test prediction date.
+   2. Set END equal to the overall latest review date
+   3. Set D equal to the overall earliest review date plus 1 year (?)
+      - this will give us at least 1 year of data for the first round
+   4. Training set: generate or load the data set whose prediction date is D
+   5. Test set: generate or load the data set whose prediction date is D + T
+   6. Train the classifier using the training data set
+   7. Test the classifier using the test data set
+      - Keep track of #correct, #incorrect, error rate
+   8. Set D equal to D + T
+   9. If D < (END - T) go to step #4 else stop
+
+Generate report showing the following:
+- number correct, number incorrect and error rate for each round
+- average error for all rounds
+
+
+
+
+
+
+ 
