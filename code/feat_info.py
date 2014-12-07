@@ -6,6 +6,9 @@ Created on Sun Nov  2 20:34:12 2014
 """
 import csv
 
+# ===============
+# Yelp! data
+
 # attribute names
 business_id = 'business_id'
 review_id = 'review_id'
@@ -84,6 +87,36 @@ qtr_star_total_pc = []
 qtr_star_total_pc.append('star_total_pc_py_q1_q2')
 qtr_star_total_pc.append('star_total_pc_py_q2_q3')
 qtr_star_total_pc.append('star_total_pc_py_q3_q4')
+
+# ===================================
+# Demographic and economic data
+census_pop = 'pop' # population
+census_black = 'black'
+census_young = 'young'
+census_old = 'old'
+census_bus_id = 'id' # the business id
+competitors = 'competitors'
+competitors_pc = 'competitors_pc',
+census_black_pc = 'black_pc'
+census_young_pc = 'young_pc'
+census_old_pc = 'old_pc'
+
+# features are listed in the order they appear in business_demo_info.csv
+demo_econ_feat_names = [census_tract, census_pop, census_black, census_young,
+                        census_old, census_bus_id, competitors, competitors_pc,
+                        census_black_pc, census_young_pc, census_old_pc]
+
+census_tract_idx = demo_econ_feat_names.index(census_tract)
+census_pop_idx = demo_econ_feat_names.index(census_pop)
+census_black_idx = demo_econ_feat_names.index(census_black)
+census_young_idx = demo_econ_feat_names.index(census_young)
+census_old_idx = demo_econ_feat_names.index(census_old)
+census_bus_id_idx = demo_econ_feat_names.index(census_bus_id)
+competitors_idx = demo_econ_feat_names.index(competitors)
+competitors_pc_idx = demo_econ_feat_names.index(competitors_pc)
+census_black_pc_idx = demo_econ_feat_names.index(census_black_pc)
+census_young_pc_idx = demo_econ_feat_names.index(census_young_pc)
+census_old_pc_idx = demo_econ_feat_names.index(census_old_pc)
 
 # class labels
 closed_q1  = 0
