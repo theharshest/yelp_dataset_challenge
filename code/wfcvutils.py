@@ -11,6 +11,7 @@ import time
 import feat_info as fi
 import datautils as du
 import jsonutils as ju
+import numpy as np
 import sklearn.metrics as metrics
 import sklearn.grid_search as grid_search
 
@@ -67,6 +68,10 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_del
             start_date = first_review_date
         if (last_review_date > end_date):
             end_date = last_review_date
+
+    # print out earliest and latest dates
+    print('Earliest review date: %s' % du.date2str(du.int2date(start_date)))
+    print('Latest review date:   %s' % du.date2str(du.int2date(end_date)))
     
     # initialize the "prediction date"
     pdate = init_pdate
@@ -86,6 +91,7 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_del
 
     # perform "walk forward cross validation"
     while (pdate <= stop_date):
+        print("\nTrain classifier using train set with prediction date %s:" % du.date2str(du.int2date(pdate)))
         # update the prediction date for the this round
         pdate = pdate + time_delta
 
@@ -109,9 +115,9 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_del
         gs = grid_search.GridSearchCV(clf, param_grid, n_jobs=-1, scoring=scorer)
         gs.fit(X_train, y_train)
 
-        print("\nBest parameters set found on development set:\n")
+        print("\nBest parameters set found on train set:\n")
         print(gs.best_estimator_)
-        print("\nGrid scores on development set:\n")
+        print("\nGrid scores on train set:\n")
         for params, mean_score, scores in gs.grid_scores_:
             print("%0.3f (+/-%0.03f) for %r"
               % (mean_score, scores.std() / 2, params))
@@ -119,8 +125,13 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_del
         # collect predictions from the classifier
         y_pred = gs.predict(X_test)
 
-        print("\nScores on evaluation set:\n")
-        print(metrics.classification_report(y_test, y_pred, target_names=fi.class_names))
+        # print out the confusion matrix
+        print("\nResults for test set with prediction date %s:\n" % du.date2str(du.int2date(pdate)))
+        cm = metrics.confusion_matrix(y_test, y_pred)
+        print_cm(cm)
+
+        #print("\nScores on evaluation set:\n")
+        #print(metrics.classification_report(y_test, y_pred, target_names=fi.class_names))
 
         # save results
         results.append((y_test, y_pred))
@@ -129,3 +140,39 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_del
     # return the true values and predictions for each round
     return results
 #end wfocv
+
+'''
+Print out the confusion matrix.
+'''
+def print_cm(cm):
+    dashes = "-------"
+    # generate & print header
+    K = cm.shape[0]
+    hdr1 = "|" + "".center(9) + "|"
+    hdr2 = "|" + dashes.center(9) + "|"
+    for k in xrange(K):
+        hdr1 += ("class %d" % k).center(9) + "|"
+        hdr2 += (dashes).center(9) + "|"
+    hdr1 += ("totals").center(9) + "|"
+    hdr2 += (dashes).center(9) + "|"
+    print(hdr2)
+    print(hdr1)
+    print(hdr2)
+    # generate & print each row
+    for j in xrange(K):
+        row = "|" + ("class %d" % j).center(9) +"|"
+        row_tot = np.sum(cm[j,:], dtype=float)
+        for k in xrange(K):
+            pcnt = (float(cm[j,k])/row_tot)*100
+            row += ("%6.2f%%" % pcnt).center(9) + "|"
+        row += ("%6d" % np.sum(cm[j,:])).center(9) + "|"
+        print(row)
+    # generate and print bottom sum row
+    print(hdr2)
+    totals = np.sum(cm,axis=0)
+    row = "|" + "totals".center(9) + "|"
+    for t in totals:
+        row += ("%6d" % t).center(9) + "|"
+    row += ("%6d" % np.sum(np.sum(cm))).center(9) + "|"
+    print(row)
+    print(hdr2)

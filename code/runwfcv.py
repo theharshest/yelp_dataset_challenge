@@ -67,7 +67,7 @@ def run_script(busjson, revjson, tipjson, init_pdate, delta, usamp=True, rbf=Fal
         # create RBF SVM to test
         c = svm.NuSVC()
         # configure parameter grid for grid search
-        param_grid = {'gamma': [0.1, 0.01, 0.001, 0.0001],
+        param_grid = {'gamma': [0.5, 0.1, 0.01, 0.001, 0.0001],
                       'kernel': ['rbf']}
     else:
         print 'using linear SVM...'
@@ -101,7 +101,9 @@ def run_script(busjson, revjson, tipjson, init_pdate, delta, usamp=True, rbf=Fal
     # print out an overall classification report
     print('\nOverall metrics for all prediction dates:\n')
     if (len(results) != 0):
-        print(metrics.classification_report(y_true, y_pred, target_names=fi.class_names))
+        cm = metrics.confusion_matrix(y_true, y_pred)
+        wfcvutils.print_cm(cm)
+        #print(metrics.classification_report(y_true, y_pred, target_names=fi.class_names))
     else:
         print '  NO RESULTS\n'
 # end run_script
