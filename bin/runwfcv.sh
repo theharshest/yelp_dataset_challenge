@@ -22,5 +22,5 @@ MONTHS=$2
 # run the python script to execute walk forward cross validation
 # assumption: the python script is in the $CODE directory
 # assumption: the data files are in the $DATA directory
-python $CODE/runwfcv.py $DATA/business.json $DATA/review.json $DATA/tip.json $PDATE $MONTHS
+python $CODE/runwfcv.py $DATA/business.json $DATA/review.json $DATA/tip.json "$@"
 

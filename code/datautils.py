@@ -95,6 +95,14 @@ Inputs:
   all_tips:
     all the JSON tip objects to consider for the dataset
 
+  verbose: (optional)
+    flag indicating whether verbose output should be produced (default is False)
+
+  usamp: (optional)
+    flag indicating whether the "stil open" class should be undersampled so that
+    the proportion of samples in this class is similar to the proportion of
+    samples in the other classes (default is True)
+
 Outputs:
 
   buses:
@@ -102,7 +110,7 @@ Outputs:
     and tip data (and eventually with census and economic data), a copy is made
     of the original JSON objects so that the objects in all_buses are not modified
 '''
-def gen_dataset(pdate, all_buses, all_reviews, all_tips):
+def gen_dataset(pdate, all_buses, all_reviews, all_tips, verbose=False, usamp=True):
     pdate_plus_3mos  =  pdate+3*month # end of following year 1st quarter
     pdate_plus_6mos  =  pdate+6*month # end of following year 2nd quarter
     pdate_plus_9mos  =  pdate+9*month # end of following year 3rd quarter
@@ -147,9 +155,11 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
                 class_counts[fi.closed_q4] = class_counts[fi.closed_q4] + 1
     # end for
 
-    print '  number of businesses that passed date filter: %d' % len(buses.values())
-    for i in xrange(5):
-        print '    class %1d: %5d' % (i,class_counts[i])
+    if (verbose):
+        print '  number of businesses that passed date filter: %d' % len(buses.values())
+        for i in xrange(5):
+            print '    class %1d: %5d' % (i,class_counts[i])
+    # end verbose
 
     qtr_boundary = [0,0,0,0,0]
     qtr_boundary[0] = pdate-12*month # start of prior year 1th quarter
@@ -196,9 +206,11 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
                         break
     # end for
 
-    print '  number of reviews that passed filter: %d' % all_rev_count
-    for i in xrange(4):
-        print '    review count q%1d: %5d' % (i+1,qtr_rev_counts[i])
+    if (verbose):
+        print '  number of reviews that passed filter: %d' % all_rev_count
+        for i in xrange(4):
+            print '    review count q%1d: %5d' % (i+1,qtr_rev_counts[i])
+    # end verbose
 
     # filter tips that do not pertain to one of the remaining businesses or
     # were not submitted before pdate
@@ -232,9 +244,11 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
 
     # end for
 
-    print '  number of tips that passed filter: %d' % all_tip_count
-    for i in xrange(4):
-        print '    tip count q%1d: %5d' % (i+1,qtr_tip_counts[i])
+    if (verbose):
+        print '  number of tips that passed filter: %d' % all_tip_count
+        for i in xrange(4):
+            print '    tip count q%1d: %5d' % (i+1,qtr_tip_counts[i])
+    # end verbose
 
     # add census data
     # TBD
@@ -242,8 +256,32 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
     # add economic data
     # TBD
 
+    # if undersampling determine weight to use for under sampling the "still open" class
+    if (usamp):
+        # get size of largest "closed" class
+        target_size = np.max(class_counts[fi.closed_q1:fi.closed_q4])
+        # calculate the percentage of "still open" records that should be kept
+        weight = float(target_size)/float(class_counts[fi.still_open])
+        if (verbose):
+            print '  weight for undersampling: %5.3f' % weight
+        # reset class count for "still open" class
+        class_counts[fi.still_open] = 0
+
     # calculate average star ratings, percent changes and remove unneeded attributes
     for bus in buses.values():
+        # if undersampling determine whether this record should be kept
+        if (usamp):
+            label = bus[fi.label]
+            if (label == fi.still_open):
+                p = np.random.uniform(0.0, 1.0)
+                if (p > weight):
+                    # do not include this record in the data set
+                    del buses[bus[fi.business_id]]
+                    # go to the next business
+                    continue
+                else:
+                    class_counts[fi.still_open] += 1
+
         # get overall review count
         rcount = bus.get(fi.review_count,0)
 
@@ -290,6 +328,13 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips):
 
         # filter out unneeded attributes
         jsonutils.filter_dict(bus, fi.data_feat_names, copy=False)
+
+    # if undersampling then output the number of businesses in the "still open"
+    # class that are remaining
+    if (verbose and usamp):
+        print '  number of businesses remaining after undersampling: %d' % len(buses.values())
+        for i in xrange(5):
+            print '    class %1d: %5d' % (i,class_counts[i])
 
     # return the final list of businesses
     return buses.values()
