@@ -90,6 +90,9 @@ qtr_star_total_pc.append('star_total_pc_py_q3_q4')
 
 # ===================================
 # Demographic and economic data
+income = 'income'
+income_pc = 'income_pc' # income per capita
+income_group = 'inc_group'
 census_pop = 'pop' # population
 census_black = 'black'
 census_young = 'young'
@@ -102,11 +105,13 @@ census_young_pc = 'young_pc'
 census_old_pc = 'old_pc'
 
 # features are listed in the order they appear in business_demo_info.csv
-demo_econ_feat_names = [census_tract, census_pop, census_black, census_young,
-                        census_old, census_bus_id, competitors, competitors_pc,
-                        census_black_pc, census_young_pc, census_old_pc]
+demo_econ_feat_names = [census_tract, income, census_pop, census_black,
+                        census_young, census_old, census_bus_id, competitors,
+                        competitors_pc, census_black_pc, census_young_pc, census_old_pc,
+                        income_pc, income_group]
 
 census_tract_idx = demo_econ_feat_names.index(census_tract)
+income_idx = demo_econ_feat_names.index(income)
 census_pop_idx = demo_econ_feat_names.index(census_pop)
 census_black_idx = demo_econ_feat_names.index(census_black)
 census_young_idx = demo_econ_feat_names.index(census_young)
@@ -117,6 +122,8 @@ competitors_pc_idx = demo_econ_feat_names.index(competitors_pc)
 census_black_pc_idx = demo_econ_feat_names.index(census_black_pc)
 census_young_pc_idx = demo_econ_feat_names.index(census_young_pc)
 census_old_pc_idx = demo_econ_feat_names.index(census_old_pc)
+income_pc_idx = demo_econ_feat_names.index(income_pc)
+income_group_idx = demo_econ_feat_names.index(income_group)
 
 # class labels
 closed_q1  = 0
