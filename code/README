@@ -48,6 +48,7 @@ The resulting data set will include the following attributes:
     avg_star_rating_py_q2
     avg_star_rating_py_q3
     avg_star_rating_py_q4
+    days_open
     label
     review_count
     review_count_%c_py_q1_q2

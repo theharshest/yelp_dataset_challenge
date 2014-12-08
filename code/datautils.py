@@ -20,6 +20,7 @@ import numpy as np
 # - 30 days x 24 hrs/day x 60 min/hr x 60 sec/min
 month = 30*24*60*60
 year = 12*month
+sec_per_day = 60*60*24
 
 '''
 Generate data sets that contain values that were available on the specified
@@ -281,6 +282,13 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips, verbose=False, usamp=Tr
                     continue
                 else:
                     class_counts[fi.still_open] += 1
+
+        # calculate number of days the restaurant has been open
+        open_date = bus.get(fi.first_review_date,None)
+        if (open_date):
+            # days = seconds / 60 s/min / 60 min/hr / 24 hr/day
+            days_open = (pdate - open_date)/sec_per_day
+            bus[fi.days_open] = days_open
 
         # get overall review count
         rcount = bus.get(fi.review_count,0)

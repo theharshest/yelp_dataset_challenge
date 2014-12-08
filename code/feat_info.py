@@ -34,6 +34,7 @@ city = 'city'
 latitude = 'latitude'
 longitude = 'longitude'
 is_open = 'open'
+days_open = 'days_open'
 
 # attribute names for quarterly values from the year prior to the prediction date
 # - py_q1 values cover the time period 9-12 months prior to prediction date
@@ -150,6 +151,7 @@ data_feat_info = {label:(int,-1),
                   avg_star_rating:(float,0.0),
                   review_count:(int,0),
                   tip_count:(int,0),
+                  days_open:(int,0),
                   income:(float,-1.0),
                   census_pop:(float,-1.0),
                   census_black:(float,-1.0),
@@ -161,7 +163,18 @@ data_feat_info = {label:(int,-1),
                   census_young_pc:(float,-1.0),
                   census_old_pc:(float,-1.0),
                   income_pc:(float,-1.0),
-                  income_group:(int,-1)}
+                  income_group:(int,-1)
+                  }
+#data_feat_info[qtr_avg_star_rating[0]]=(float,0)
+#data_feat_info[qtr_avg_star_rating[1]]=(float,0)
+#data_feat_info[qtr_avg_star_rating[2]]=(float,0)
+#data_feat_info[qtr_avg_star_rating[3]]=(float,0)
+
+#data_feat_info[qtr_review_count[0]]=(int,0)
+#data_feat_info[qtr_review_count[1]]=(int,0)
+#data_feat_info[qtr_review_count[2]]=(int,0)
+#data_feat_info[qtr_review_count[3]]=(int,0)
+
 for qtr in xrange(4):
     data_feat_info[qtr_review_count[qtr]]=(int,0)
     data_feat_info[qtr_tip_count[qtr]]=(int,0)
