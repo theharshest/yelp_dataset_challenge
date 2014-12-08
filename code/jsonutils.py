@@ -251,7 +251,7 @@ Inputs:
 
   std: (optional)
     whether the attribute values should be standardized to have a mean of zero
-    and a standard deviation of one (default is True)
+    and a standard deviation of one (default is False)
 
 Outputs:
 
@@ -261,7 +261,7 @@ Outputs:
   y:
     a sparse matrix with one column containing the class labels
 '''
-def json2xy(json, column_info, label_attr, std=True):
+def json2xy(json, column_info, label_attr, std=False):
     # convert JSON into a feature matrix
     data, columns = get_matrix(json, column_info=column_info)
 
