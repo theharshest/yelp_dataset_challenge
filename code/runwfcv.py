@@ -192,14 +192,18 @@ def run_script(busjson, revjson, tipjson, init_pdate, delta, ctype=linsvm,
         # create linear SVM to test
         c = svm.LinearSVC()
         # configure parameter grid for grid search
+        C_range = 10.0 ** np.arange(-3, 5)
         if (rfe):
             print 'using linear SVM with RFE...'
             c = fs.RFECV(c, step=1)
-            pgrid = [{'C':0.01},{'C':0.1},{'C':1},{'C':10},{'C':100},{'C':1000},{'C':10000}]
+            pgrid = []
+            for C in C_range:
+                pgrid.append({'C':C})
+            #pgrid = [{'C':0.01},{'C':0.1},{'C':1},{'C':10},{'C':100},{'C':1000},{'C':10000}]
             param_grid = {'estimator_params': pgrid}
         else:
             print 'using linear SVM...'
-            param_grid = {'C': [0.01, 0.1, 1, 10, 100, 1000, 10000]}
+            param_grid = {'C': C_range}
 
     # run the walk-forward cross validation and collect the results
     print('run walk-forward cross validation...')
