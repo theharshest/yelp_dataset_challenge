@@ -47,6 +47,9 @@ def main():
                                                 'date and test prediction date (the size of the steps)')
     parser.add_argument('-nus', help='this flag turns off under-sampling for the still open class',
                         action='store_true')
+    parser.add_argument('-binary', help='generate data for a binary classification problem, the specified '+
+                                     'labels are combined into the positive class and the remaining '
+                                     'labels are placed into the negative class', nargs='+', metavar='label', type=int)
     parser.add_argument('-rfe', help='this flag causes recursive feature elimination to be used (not '+
                                      'supported for all classifiers)', action='store_true')
     parser.add_argument('-pca', type=int, default=-1,
@@ -109,12 +112,12 @@ def main():
 
     # run the script
     run_script(args.busjson, args.revjson, args.tipjson, args.pdate, args.delta,
-               ctype=args.ctype, usamp=(not args.nus), rfe=args.rfe, pca=args.pca,
-               feat_info=feat_info)
+               ctype=args.ctype, usamp=(not args.nus), binary=args.binary, rfe=args.rfe,
+               pca=args.pca, feat_info=feat_info)
 # end main
 
 def run_script(busjson, revjson, tipjson, init_pdate, delta, ctype=linsvm,
-               usamp=True, rfe=False, pca=-1, feat_info=fi.data_feat_info):
+               usamp=True, binary=None, rfe=False, pca=-1, feat_info=fi.data_feat_info):
     print 'Initial prediction date: %s' % init_pdate
     print 'Time delta: %d months' % delta
 
@@ -213,7 +216,7 @@ def run_script(busjson, revjson, tipjson, init_pdate, delta, ctype=linsvm,
         print('  NOT under-sampling still open class...')
     results = wfcvutils.wfcv(c, param_grid, all_buses, all_reviews, all_tips,
                              pdate, delta*du.month, pca=pca, usamp=usamp,
-                             feat_info=feat_info)
+                             binary=binary, feat_info=feat_info)
     
     # combine the results to produce overall metrics
     y_true = None

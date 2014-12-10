@@ -58,6 +58,12 @@ Inputs:
   usamp: (optional)
     if True then the "still open" class is under-sampled (default is True)
 
+  binary: (optional)
+    specifies the list of classes to treat as the positive class in a binary
+    classification problem, the remaining classes are treated as the negative
+    class, if not specified then data is generated for a multi-class
+    classification problem (default is None)
+
   pca: (optional)
     indicates whether PCA should be used to reduce the dimension of the data:
       pca < 0 - don't use PCA (default)
@@ -73,7 +79,7 @@ Outputs:
     on that round's test examples
 '''
 def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_delta,
-         feat_info=fi.data_feat_info, std_data=True, usamp=True, pca=-1):
+         feat_info=fi.data_feat_info, std_data=True, usamp=True, binary=None, pca=-1):
     # find the earliest and latest review dates
     start_date = int(time.time())
     end_date = 0
@@ -96,7 +102,7 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_del
     X_train_orig,y_train = None,None
 
     # generate the first data set
-    buses_test = du.gen_dataset(pdate, all_buses, all_reviews, all_tips, usamp=usamp)    
+    buses_test = du.gen_dataset(pdate, all_buses, all_reviews, all_tips, usamp=usamp, binary=binary)    
     X_test_orig,y_test = ju.json2xy(buses_test, feat_info, fi.label, std=False)
     
     print('Number of attributes in data set: %d' % X_test_orig.shape[1])
@@ -123,7 +129,7 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_del
         y_train = y_test
 
         # generate a new test set for this round
-        buses_test = du.gen_dataset(pdate, all_buses, all_reviews, all_tips, usamp=usamp)    
+        buses_test = du.gen_dataset(pdate, all_buses, all_reviews, all_tips, usamp=usamp, binary=binary)    
         X_test_orig,y_test = ju.json2xy(buses_test, feat_info, fi.label, std=False)
 
         # by default, use the original untransformed X data
