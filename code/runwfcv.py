@@ -26,6 +26,7 @@ import sklearn.feature_selection as fs
 import sklearn.tree as tree
 import sklearn.ensemble as ensemble
 import sklearn.neighbors as neigh
+import sklearn.linear_model as linmod
 import argparse
 
 # classifier types
@@ -78,15 +79,17 @@ def main():
                         action='store_const', const=rf, dest='ctype')
     group2.add_argument('-dt', help='use a decision tree classifier',
                         action='store_const', const=dt, dest='ctype')
-
+    group2.add_argument('-reg', help='treat the problem as a regression problem and use ' +
+                                     'ordinary least squares for training and prediction',
+                                     action='store_true')
     args = parser.parse_args()
 
     # list the available attributes
     if (args.la):
         print 'available attributes:'
-        for attr in fi.data_feat_names:
-            # label is always included
-            if (attr != fi.label):
+        for attr in sorted(fi.data_feat_names):
+            # label and target are is always included
+            if (attr != fi.label and attr != fi.target):
                 print '  %s' % attr
         return
 
@@ -96,6 +99,8 @@ def main():
         feat_info = {}
         # label is always included
         feat_info[fi.label] = fi.data_feat_info[fi.label]
+        # target is always included
+        feat_info[fi.target] = fi.data_feat_info[fi.target]
         for attr in args.a:
             # make sure the attribute is valid
             if (attr in fi.data_feat_info):
@@ -113,11 +118,11 @@ def main():
     # run the script
     run_script(args.busjson, args.revjson, args.tipjson, args.pdate, args.delta,
                ctype=args.ctype, usamp=(not args.nus), binary=args.binary, rfe=args.rfe,
-               pca=args.pca, feat_info=feat_info)
+               pca=args.pca, reg=args.reg, feat_info=feat_info)
 # end main
 
 def run_script(busjson, revjson, tipjson, init_pdate, delta, ctype=linsvm,
-               usamp=True, binary=None, rfe=False, pca=-1, feat_info=fi.data_feat_info):
+               usamp=True, binary=None, rfe=False, pca=-1, reg=False, feat_info=fi.data_feat_info):
     print 'Initial prediction date: %s' % init_pdate
     print 'Time delta: %d months' % delta
 
@@ -140,7 +145,13 @@ def run_script(busjson, revjson, tipjson, init_pdate, delta, ctype=linsvm,
     # - See http://scikit-learn.org/stable/auto_examples/plot_rfe_with_cross_validation.html#example-plot-rfe-with-cross-validation-py
     # - See http://stackoverflow.com/questions/23815938/recursive-feature-elimination-and-grid-search-using-scikit-learn
 
-    if (ctype==rbfsvm):
+    if (reg):
+        # create the least squares linear regressor
+        print 'using least squares linear regression...'
+        c = linmod.LinearRegression()
+        # grid search not supported for linear regression (???)
+        param_grid = None
+    elif (ctype==rbfsvm):
         # create RBF SVM to test
         #c = svm.NuSVC(kernel='rbf')
         c = svm.SVC(kernel='rbf')
@@ -216,7 +227,7 @@ def run_script(busjson, revjson, tipjson, init_pdate, delta, ctype=linsvm,
         print('  NOT under-sampling still open class...')
     results = wfcvutils.wfcv(c, param_grid, all_buses, all_reviews, all_tips,
                              pdate, delta*du.month, pca=pca, usamp=usamp,
-                             binary=binary, feat_info=feat_info)
+                             binary=binary, reg=reg, feat_info=feat_info)
     
     # combine the results to produce overall metrics
     y_true = None
@@ -235,9 +246,12 @@ def run_script(busjson, revjson, tipjson, init_pdate, delta, ctype=linsvm,
     print('\n=========================================')
     print('Overall metrics for all prediction dates:\n')
     if (len(results) != 0):
-        cm = metrics.confusion_matrix(y_true, y_pred)
-        wfcvutils.print_cm(cm)
-        #print(metrics.classification_report(y_true, y_pred, target_names=fi.class_names))
+        if (reg):
+            wfcvutils.print_reg_metrics(y_true, y_pred)
+        else:
+            cm = metrics.confusion_matrix(y_true, y_pred)
+            wfcvutils.print_cm(cm)
+            #print(metrics.classification_report(y_true, y_pred, target_names=fi.class_names))
     else:
         print '  NO RESULTS\n'
 # end run_script

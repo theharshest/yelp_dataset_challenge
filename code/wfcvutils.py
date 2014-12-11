@@ -64,6 +64,9 @@ Inputs:
     class, if not specified then data is generated for a multi-class
     classification problem (default is None)
 
+  reg: (optional)
+    indicaes that the "classifier" is actually a regressor (default is False)
+
   pca: (optional)
     indicates whether PCA should be used to reduce the dimension of the data:
       pca < 0 - don't use PCA (default)
@@ -79,7 +82,7 @@ Outputs:
     on that round's test examples
 '''
 def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_delta,
-         feat_info=fi.data_feat_info, std_data=True, usamp=True, binary=None, pca=-1):
+         feat_info=fi.data_feat_info, std_data=True, usamp=True, binary=None, reg=False, pca=-1):
     # find the earliest and latest review dates
     start_date = int(time.time())
     end_date = 0
@@ -102,8 +105,13 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_del
     X_train_orig,y_train = None,None
 
     # generate the first data set
-    buses_test = du.gen_dataset(pdate, all_buses, all_reviews, all_tips, usamp=usamp, binary=binary)    
-    X_test_orig,y_test = ju.json2xy(buses_test, feat_info, fi.label, std=False)
+    buses_test = du.gen_dataset(pdate, all_buses, all_reviews, all_tips, usamp=usamp, binary=binary, reg=reg)
+    if (reg):
+        # extract the target value as the y values for regression
+        X_test_orig,y_test = ju.json2xy(buses_test, feat_info, fi.target, std=False)
+    else:
+        # extract the label value as the y values for classification
+        X_test_orig,y_test = ju.json2xy(buses_test, feat_info, fi.label, std=False)
     
     print('Number of attributes in data set: %d' % X_test_orig.shape[1])
 
@@ -114,13 +122,17 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_del
     results = []
 
     # configure scoring metric to be used during grid search and feature selection
-    # - select a metric that is suited to unbalanced classification
-    scorer = 'f1'
+    if (usamp):
+        # if class sizes are balanced then use accuracy
+        scorer = 'accuracy'
+    else:
+        # if class sizes are unbalanced then use f1 score
+        scorer = 'f1'
 
     # perform "walk forward cross validation"
     while (pdate <= stop_date):
         print('\n===================================================================')
-        print("Train classifier using train set with prediction date %s:" % du.date2str(du.int2date(pdate)))
+        print("Train estimator using train set with prediction date %s:" % du.date2str(du.int2date(pdate)))
         # update the prediction date for the this round
         pdate = pdate + time_delta
 
@@ -129,8 +141,13 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_del
         y_train = y_test
 
         # generate a new test set for this round
-        buses_test = du.gen_dataset(pdate, all_buses, all_reviews, all_tips, usamp=usamp, binary=binary)    
-        X_test_orig,y_test = ju.json2xy(buses_test, feat_info, fi.label, std=False)
+        buses_test = du.gen_dataset(pdate, all_buses, all_reviews, all_tips, usamp=usamp, binary=binary, reg=reg)
+        if (reg):
+            # extract the target value as the y values for regression
+            X_test_orig,y_test = ju.json2xy(buses_test, feat_info, fi.target, std=False)
+        else:
+            # extract the label value as the y values for classification
+            X_test_orig,y_test = ju.json2xy(buses_test, feat_info, fi.label, std=False)
 
         # by default, use the original untransformed X data
         # - X_train & X_test will contain the transformed data (if any transformation is done)
@@ -170,25 +187,41 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, init_pdate, time_del
         # use grid search to train and test the classifier:
         # - see http://scikit-learn.org/stable/auto_examples/grid_search_digits.html#example-grid-search-digits-py
 
-        # train the classifier using grid search
-        gs = grid_search.GridSearchCV(clf, param_grid, n_jobs=-1, scoring=scorer)
-        #gs = grid_search.GridSearchCV(clf, param_grid, scoring=scorer)
+        if (param_grid):
+            # train the classifier using grid search
+            gs = grid_search.GridSearchCV(clf, param_grid, n_jobs=-1, scoring=scorer)
+            #gs = grid_search.GridSearchCV(clf, param_grid, scoring=scorer)
+        else:
+            # use the classifier/regressor without grid search
+            gs = clf
+
+        print '\nTraining the estimator...'
         gs.fit(X_train, y_train)
 
-        print("\nBest parameters set found on train set:\n")
-        print(gs.best_estimator_)
-        print("\nGrid scores on train set:\n")
-        for params, mean_score, scores in gs.grid_scores_:
-            print("  %0.3f (+/-%0.03f) for %r"
-              % (mean_score, scores.std() / 2, params))
+        if (param_grid):
+            print("\nBest parameters set found on train set:\n")
+            print(gs.best_estimator_)
+            print("\nGrid scores on train set:\n")
+            for params, mean_score, scores in gs.grid_scores_:
+                print("  %0.3f (+/-%0.03f) for %r"
+                      % (mean_score, scores.std() / 2, params))
+
+        # if using RFE - print out number of features selected
+        # TBD
 
         # collect predictions from the classifier
+        print '\nTesting the estimator...'
         y_pred = gs.predict(X_test)
 
-        # print out the confusion matrix
         print("\nResults for test set with prediction date %s:\n" % du.date2str(du.int2date(pdate)))
-        cm = metrics.confusion_matrix(y_test, y_pred)
-        print_cm(cm)
+        if (reg):
+            # print out explained variance score, mean absolute error, mean squared
+            # error and R-squared metrics
+            print_reg_metrics(y_test, y_pred)
+        else:
+            # print out the confusion matrix
+            cm = metrics.confusion_matrix(y_test, y_pred)
+            print_cm(cm)
 
         #print("\nScores on evaluation set:\n")
         #print(metrics.classification_report(y_test, y_pred, target_names=fi.class_names))
@@ -236,3 +269,15 @@ def print_cm(cm):
     row += ("%6d" % np.sum(np.sum(cm))).center(9) + "|"
     print(row)
     print(hdr2)
+
+'''
+Print out explained variance score, mean absolute error, mean squared error and
+R-squared metrics
+'''
+def print_reg_metrics(y_test, y_pred):
+    print '%s  %s' % ('metric'.center(20), 'value'.center(12))
+    print '--------------------  ------------'
+    print 'explained variance:  %12.3f' % metrics.explained_variance_score(y_test, y_pred)
+    print 'mean absolute error: %12.3f' % metrics.mean_absolute_error(y_test, y_pred)
+    print 'mean squared error:  %12.3f' % metrics.mean_squared_error(y_test, y_pred)
+    print 'R-squared score:     %12.3f' % metrics.r2_score(y_test, y_pred)
