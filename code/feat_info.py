@@ -9,12 +9,15 @@ import csv
 # ===============
 # Yelp! data
 
+# target values
+label = 'label'   # label for classification
+target = 'target' # target y value for regression
+
 # attribute names
 business_id = 'business_id'
 review_id = 'review_id'
 tip_id = 'tip_id'
 user_id = 'user_id'
-label = 'label'
 avg_star_rating = 'avg_star_rating'
 review_count = 'review_count'
 tip_count = 'tip_count'
@@ -147,6 +150,7 @@ class_names = ['closed in Q1',   # closed 0-3 months following prediction date
 
 # features included in datasets generated for specified prediction dates
 data_feat_info = {label:(int,-1),
+                  target:(int,-1),
                   star_total:(float,0.0),
                   avg_star_rating:(float,0.0),
                   review_count:(int,0),

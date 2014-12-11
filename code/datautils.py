@@ -21,6 +21,7 @@ import numpy as np
 month = 30*24*60*60
 year = 12*month
 sec_per_day = 60*60*24
+latest_date_str = '2014-07-30'
 
 '''
 Generate data sets that contain values that were available on the specified
@@ -97,13 +98,17 @@ Inputs:
     all the JSON tip objects to consider for the dataset
 
   verbose: (optional)
-    flag indicating whether verbose output should be produced (default is False)
+    flag indicating whether verbose output should be produced (default is True)
 
   binary: (optional)
     specifies the list of classes to treat as the positive class in a binary
     classification problem, the remaining classes are treated as the negative
     class, if not specified then data is generated for a multi-class
     classification problem (default is None)
+
+  reg: (optional)
+    specifies that the data set should be generated with target values for
+    "days until close" rather then classification labels (default is False)
 
   usamp: (optional)
     flag indicating whether the "stil open" class should be undersampled so that
@@ -117,11 +122,19 @@ Outputs:
     and tip data (and eventually with census and economic data), a copy is made
     of the original JSON objects so that the objects in all_buses are not modified
 '''
-def gen_dataset(pdate, all_buses, all_reviews, all_tips, verbose=True, usamp=True, binary=None):
+def gen_dataset(pdate, all_buses, all_reviews, all_tips, verbose=True, usamp=True, binary=None, reg=False):
     pdate_plus_3mos  =  pdate+3*month # end of following year 1st quarter
     pdate_plus_6mos  =  pdate+6*month # end of following year 2nd quarter
     pdate_plus_9mos  =  pdate+9*month # end of following year 3rd quarter
     pdate_plus_12mos = pdate+12*month # end of following year 4th quarter
+
+    if (reg):
+        print 'generating data set for regression...'
+    else:
+        print 'generating data set for classification...'
+
+    # latest date - this should really be passed in as a parameter
+    latest_date = date2int(str2date(latest_date_str))
 
     # filter businesses that were not open before pdate or closed before pdate
     # and set the class label for those that remain
@@ -139,6 +152,15 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips, verbose=True, usamp=Tru
             # business meets the criteria - add a copy to dictionary
             bus = orig_bus.copy()
             buses[bus[fi.business_id]]=bus
+            # set target days until close value for business
+            if (reg):
+                # calculate the regression target value days until close and
+                # set this as the value for label
+                if (close_date):
+                    bus[fi.target] = (close_date - pdate)/sec_per_day
+                else:
+                    bus[fi.target] = (latest_date - pdate)/sec_per_day
+
             # set class label for business
             if (is_open or (close_date > pdate_plus_12mos)):
                 # still open 12 months after pdate
@@ -363,7 +385,17 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips, verbose=True, usamp=Tru
                 bus[fi.qtr_avg_star_rating_pc[qtr-1]] = pct_change(prev_qtr_asr, qtr_asr)
 
         # filter out unneeded attributes
-        jsonutils.filter_dict(bus, fi.data_feat_names, copy=False)
+        feat_names = list(fi.data_feat_names) # copies the list
+        if (reg):
+            # if the data set will be used for regression - remove class label
+            if (fi.label in feat_names):
+                #feat_names.remove(fi.label)
+                fi.label
+        else:
+            # if the data set will be used for classification - remove target
+            if (fi.target in feat_names):
+                feat_names.remove(fi.target)
+        jsonutils.filter_dict(bus, feat_names, copy=False)
 
     # if undersampling then output the number of businesses in the "still open"
     # class that are remaining
