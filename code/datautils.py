@@ -118,6 +118,10 @@ Inputs:
     the proportion of samples in this class is similar to the proportion of
     samples in the other classes (default is True)
 
+  states: (optional)
+    list of the states to include in the data set, if the parameter is None
+    then all states are included (default is None)
+
 Outputs:
 
   buses:
@@ -125,7 +129,7 @@ Outputs:
     and tip data (and eventually with census and economic data), a copy is made
     of the original JSON objects so that the objects in all_buses are not modified
 '''
-def gen_dataset(pdate, all_buses, all_reviews, all_tips, all_senti, verbose=True, usamp=True, binary=None, reg=False):
+def gen_dataset(pdate, all_buses, all_reviews, all_tips, all_senti, verbose=True, usamp=True, binary=None, reg=False, states=None):
     pdate_plus_3mos  =  pdate+3*month # end of following year 1st quarter
     pdate_plus_6mos  =  pdate+6*month # end of following year 2nd quarter
     pdate_plus_9mos  =  pdate+9*month # end of following year 3rd quarter
@@ -144,6 +148,13 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips, all_senti, verbose=True
     buses = {}
     class_counts = [0, 0, 0, 0, 0]
     for orig_bus in all_buses:
+        # make sure the restaurant is in one of the specified states
+        if (states):
+            state = orig_bus.get(fi.state,None)
+            if (state not in states):
+                # skip this business
+                continue
+        # get open and close dates for this business
         open_date = orig_bus.get(fi.first_review_date,None)
         is_open = orig_bus[fi.is_open]
         close_date = orig_bus.get(fi.close_date,None)

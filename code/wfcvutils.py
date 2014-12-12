@@ -61,6 +61,10 @@ Inputs:
   usamp: (optional)
     if True then the "still open" class is under-sampled (default is True)
 
+  states: (optional)
+    list of the states to include in the data set, if the parameter is None
+    then all states are included (default is None)
+
   binary: (optional)
     specifies the list of classes to treat as the positive class in a binary
     classification problem, the remaining classes are treated as the negative
@@ -85,7 +89,8 @@ Outputs:
     on that round's test examples
 '''
 def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, all_senti, init_pdate, time_delta,
-         feat_info=fi.data_feat_info, std_data=True, usamp=True, binary=None, reg=False, pca=-1):
+         feat_info=fi.data_feat_info, std_data=True, usamp=True, binary=None, reg=False, pca=-1,
+         states=None):
     # find the earliest and latest review dates
     start_date = int(time.time())
     end_date = 0
@@ -108,7 +113,7 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, all_senti, init_pdat
     X_train_orig,y_train = None,None
 
     # generate the first data set
-    buses_test = du.gen_dataset(pdate, all_buses, all_reviews, all_tips, all_senti, usamp=usamp, binary=binary, reg=reg)
+    buses_test = du.gen_dataset(pdate, all_buses, all_reviews, all_tips, all_senti, usamp=usamp, states=states, binary=binary, reg=reg)
     if (reg):
         # extract the target value as the y values for regression
         X_test_orig,y_test = ju.json2xy(buses_test, feat_info, fi.target, std=False)
@@ -144,7 +149,7 @@ def wfcv(clf, param_grid, all_buses, all_reviews, all_tips, all_senti, init_pdat
         y_train = y_test
 
         # generate a new test set for this round
-        buses_test = du.gen_dataset(pdate, all_buses, all_reviews, all_tips, all_senti, usamp=usamp, binary=binary, reg=reg)
+        buses_test = du.gen_dataset(pdate, all_buses, all_reviews, all_tips, all_senti, usamp=usamp, states=states, binary=binary, reg=reg)
         if (reg):
             # extract the target value as the y values for regression
             X_test_orig,y_test = ju.json2xy(buses_test, feat_info, fi.target, std=False)
