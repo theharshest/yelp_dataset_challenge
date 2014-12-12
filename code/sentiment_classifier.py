@@ -1,3 +1,14 @@
+'''
+Usage:
+	python build_sentiment_classifier.py <filename>
+
+	where,
+	filename is the .json file for eother reviews or tips
+
+Output:
+	.csv file <filename>_score_pickle with entries as date, id, score
+'''
+
 from bs4 import BeautifulSoup
 import preprocessing
 import numpy as np
@@ -9,6 +20,7 @@ from sklearn.feature_selection import SelectKBest, chi2, f_classif
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
 import pickle
+import sys
 
 def get_data(filename1, filename2):
 	'''
@@ -41,19 +53,21 @@ def get_data(filename1, filename2):
 
 	X2 = np.array([])
 	business_ids = np.array([])
+	dates = np.array([])
 
 	test_data = open(filename2)
 	for line in test_data:
 		line = json.loads(line)
 		X2 = np.hstack((X2, np.array(line['text'])))
 		business_ids = np.hstack((business_ids, np.array(line['business_id'])))
+		dates = np.hstack((dates, np.array(line['date'])))
 	test_data.close()	
 
 	X1 = np.hstack((X1, X2))
 
-	return X1, y, business_ids
+	return X1, y, business_ids, dates
 
-def build_sentiment_classifier(X, y, bids):
+def build_sentiment_classifier(X, y, bids, dates):
 	'''
 	Train and pickle the sentiment classifier
 	'''
@@ -93,16 +107,16 @@ def build_sentiment_classifier(X, y, bids):
 	clf_SVM.fit(X1_tfidf, y)
 
 	y2 = clf_SVM.predict(X2_tfidf)
-	y2 = np.vstack((bids, y2))
+	y2 = np.vstack((dates, bids, y2))
 
 	return y2
 
 if __name__ == "__main__":
 	filename = sys.argv[1]
 	
-	X, y, bids = get_data("Restaurants_Train.xml", filename)
-	score = build_sentiment_classifier(X, y, bids)
+	X, y, bids, dates = get_data("Restaurants_Train.xml", filename)
+	score = build_sentiment_classifier(X, y, bids, dates)
 
-	picklefile = open('score_pickle', 'wb')
+	picklefile = open(filename + '_score_pickle', 'wb')
 	pickle.dump(score, picklefile)
 	picklefile.close()
