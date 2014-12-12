@@ -16,6 +16,7 @@ Created on Sun Nov 30 23:26:13 2014
 """
 
 import jsonutils as ju
+import csvutils as cu
 import datautils as du
 import feat_info as fi
 import numpy as np
@@ -43,6 +44,7 @@ def main():
     parser.add_argument('busjson', help='path to the file where filtered business data is stored')
     parser.add_argument('revjson', help='path to the file where filtered review data is stored')
     parser.add_argument('tipjson', help='path to the file where filtered tip data is stored')
+    parser.add_argument('senticsv', help='path to the file where sentiment rank data is stored')
     parser.add_argument('pdate', help='the initial prediction date to use for walking forward')
     parser.add_argument('delta', type=int, help='the number of months between training prediction ' +
                                                 'date and test prediction date (the size of the steps)')
@@ -116,12 +118,12 @@ def main():
             feat_info.pop(attr, None)
 
     # run the script
-    run_script(args.busjson, args.revjson, args.tipjson, args.pdate, args.delta,
+    run_script(args.busjson, args.revjson, args.tipjson, args.senticsv, args.pdate, args.delta,
                ctype=args.ctype, usamp=(not args.nus), binary=args.binary, rfe=args.rfe,
                pca=args.pca, reg=args.reg, feat_info=feat_info)
 # end main
 
-def run_script(busjson, revjson, tipjson, init_pdate, delta, ctype=linsvm,
+def run_script(busjson, revjson, tipjson, senticsv, init_pdate, delta, ctype=linsvm,
                usamp=True, binary=None, rfe=False, pca=-1, reg=False, feat_info=fi.data_feat_info):
     print 'Initial prediction date: %s' % init_pdate
     print 'Time delta: %d months' % delta
@@ -141,6 +143,10 @@ def run_script(busjson, revjson, tipjson, init_pdate, delta, ctype=linsvm,
     print 'loading tip objects from %s...' % tipjson
     all_tips, junk = ju.load_objects(tipjson)
     
+    # load sentiment ranking data derived from tip and review data
+    print 'loading sentiment rankings from %s...' % senticsv
+    all_senti = cu.load_matrix(senticsv, has_hdr=False)
+
     # reduce the number of features using recursive feature elimination
     # - See http://scikit-learn.org/stable/auto_examples/plot_rfe_with_cross_validation.html#example-plot-rfe-with-cross-validation-py
     # - See http://stackoverflow.com/questions/23815938/recursive-feature-elimination-and-grid-search-using-scikit-learn
@@ -225,7 +231,7 @@ def run_script(busjson, revjson, tipjson, init_pdate, delta, ctype=linsvm,
         print('  under-sampling still open class...')
     else:
         print('  NOT under-sampling still open class...')
-    results = wfcvutils.wfcv(c, param_grid, all_buses, all_reviews, all_tips,
+    results = wfcvutils.wfcv(c, param_grid, all_buses, all_reviews, all_tips, all_senti,
                              pdate, delta*du.month, pca=pca, usamp=usamp,
                              binary=binary, reg=reg, feat_info=feat_info)
     

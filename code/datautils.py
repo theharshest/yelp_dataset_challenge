@@ -97,6 +97,9 @@ Inputs:
   all_tips:
     all the JSON tip objects to consider for the dataset
 
+  all_senti:
+    matrix containing all sentiment ranks to consider for the dataset
+
   verbose: (optional)
     flag indicating whether verbose output should be produced (default is True)
 
@@ -122,7 +125,7 @@ Outputs:
     and tip data (and eventually with census and economic data), a copy is made
     of the original JSON objects so that the objects in all_buses are not modified
 '''
-def gen_dataset(pdate, all_buses, all_reviews, all_tips, verbose=True, usamp=True, binary=None, reg=False):
+def gen_dataset(pdate, all_buses, all_reviews, all_tips, all_senti, verbose=True, usamp=True, binary=None, reg=False):
     pdate_plus_3mos  =  pdate+3*month # end of following year 1st quarter
     pdate_plus_6mos  =  pdate+6*month # end of following year 2nd quarter
     pdate_plus_9mos  =  pdate+9*month # end of following year 3rd quarter
@@ -270,7 +273,6 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips, verbose=True, usamp=Tru
                         obj[fi.qtr_tip_count[qtr]] = qtr_tcount + 1
                         # don't need to check the other quarters for this tip
                         break
-
     # end for
 
     if (verbose):
@@ -279,11 +281,36 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips, verbose=True, usamp=Tru
             print '    tip count q%1d: %5d' % (i+1,qtr_tip_counts[i])
     # end verbose
 
-    # add census data
-    # TBD
+    # filter sentiment rankings that do not pertain to one of the remaining
+    # businesses or were not derived from reviews and tips submitted before pdate
+    all_senti_count = 0
+    for i in xrange(all_senti.shape[0]):
+        # look for the corresponding business
+        bid = all_senti[i,fi.senti_bus_idx]
+        obj = buses.get(bid, None)
 
-    # add economic data
-    # TBD
+        # update senti_count and senti_total for the business
+        if (obj is not None):
+            sdate = all_senti[i,fi.senti_date_idx]
+            # convert date string to integer
+            sdate = date2int(str2date(sdate))
+            # make sure that the sentiment is for a review or tip submitted
+            # in the last six months
+            if ((sdate > qtr_boundary[2]) and (sdate <= pdate)):
+                all_senti_count += 1
+
+                # update overall senti count
+                scount = obj.get(fi.senti_count,0)
+                obj[fi.senti_count] = scount + 1
+                # update senti rank total
+                senti = int(all_senti[i,fi.senti_rank_idx])
+                stotal = obj.get(fi.senti_total,0)
+                obj[fi.senti_total] = stotal + senti
+    # end for
+
+    if (verbose):
+        print '  number of sentiment ranks that passed filter: %d' % all_senti_count
+    # end verbose
 
     # if undersampling determine weight to use for under sampling the "still open" class
     if (usamp):
@@ -350,6 +377,16 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips, verbose=True, usamp=Tru
             # calculate overall average star rating
             bus[fi.avg_star_rating] = float(stotal)/float(rcount)
 
+        # get overall senti count
+        scount = bus.get(fi.senti_count,0)
+
+        # calculate overall average sentiment rating
+        if (scount > 0):
+            # get overall senti total
+            stotal = bus.get(fi.senti_total,0)
+            # calculate overall average senti rating
+            bus[fi.avg_senti_rating] = float(stotal)/float(scount)
+
         # calculate quarterly average star rating and quarterly percent changes
         for qtr in xrange(4):
             # calculate quarterly average star rating
@@ -389,8 +426,7 @@ def gen_dataset(pdate, all_buses, all_reviews, all_tips, verbose=True, usamp=Tru
         if (reg):
             # if the data set will be used for regression - remove class label
             if (fi.label in feat_names):
-                #feat_names.remove(fi.label)
-                fi.label
+                feat_names.remove(fi.label)
         else:
             # if the data set will be used for classification - remove target
             if (fi.target in feat_names):

@@ -129,6 +129,16 @@ census_old_pc_idx = demo_econ_feat_names.index(census_old_pc)
 income_pc_idx = demo_econ_feat_names.index(income_pc)
 income_group_idx = demo_econ_feat_names.index(income_group)
 
+# ===================================
+# Sentiment data
+senti_count = 'senti_count'
+senti_total = 'senti_total'
+avg_senti_rating = 'avg_senti_rating'
+
+senti_date_idx = 0
+senti_bus_idx = 1
+senti_rank_idx = 2
+
 # class labels
 closed_q1  = 0
 closed_q2  = 1
@@ -167,7 +177,9 @@ data_feat_info = {label:(int,-1),
                   census_young_pc:(float,-1.0),
                   census_old_pc:(float,-1.0),
                   income_pc:(float,-1.0),
-                  income_group:(int,-1)
+                  income_group:(int,-1),
+                  senti_total:(int,0),
+                  avg_senti_rating:(float,0.0)
                   }
 #data_feat_info[qtr_avg_star_rating[0]]=(float,0)
 #data_feat_info[qtr_avg_star_rating[1]]=(float,0)
